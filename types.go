@@ -1,14 +1,13 @@
 package main
 
 var hotCategory = category{
-	Name:          "热门",
-	fetchSchedule: fetchHotMatches,
+	ID:   "hot",
+	Name: "热门",
 }
 
 type category struct {
-	ID            string `json:"columnId"`
-	Name          string `json:"name"`
-	fetchSchedule func() ([]match, error)
+	ID   string `json:"columnId"`
+	Name string `json:"name"`
 }
 
 func (c category) FilterValue() string {
@@ -16,7 +15,7 @@ func (c category) FilterValue() string {
 }
 
 func (c category) equal(v category) bool {
-	return c.Name == v.Name && c.ID == v.ID
+	return c.ID == v.ID
 }
 
 type matchPeriod string
@@ -56,4 +55,20 @@ func (m match) isMatch() bool {
 
 func (m match) FilterValue() string {
 	return ""
+}
+
+type textLive struct {
+	Content    string `json:"content"`
+	LeftGoal   string `json:"leftGoal"`
+	RightGoal  string `json:"rightGoal"`
+	IndexValue string `json:"indexValue"`
+	Plus       string `json:"plus"`
+	Quarter    struct {
+		Quarter string `json:"quarter"`
+		Time    string `json:"time"`
+	} `json:"kbsInfo"`
+}
+
+func (t textLive) FilterValue() string {
+	return t.Content
 }

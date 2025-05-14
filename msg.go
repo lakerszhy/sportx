@@ -88,3 +88,41 @@ func newScheduleFailedMsg(category category, err error) scheduleMsg {
 		status:   statusFailed,
 	}
 }
+
+type matchSelectionMsg string
+
+type textLivesMsg struct {
+	matchID   string
+	textLives []textLive
+	err       error
+	status
+}
+
+func newTextLivesInitialMsg() textLivesMsg {
+	return textLivesMsg{
+		status: statusInitial,
+	}
+}
+
+func newTextLivesLoadingMsg(matchID string) textLivesMsg {
+	return textLivesMsg{
+		matchID: matchID,
+		status:  statusLoading,
+	}
+}
+
+func newTextLivesLoadedMsg(matchID string, textLives []textLive) textLivesMsg {
+	return textLivesMsg{
+		matchID:   matchID,
+		textLives: textLives,
+		status:    statusSuccess,
+	}
+}
+
+func newTextLivesFailedMsg(matchID string, err error) textLivesMsg {
+	return textLivesMsg{
+		matchID: matchID,
+		err:     err,
+		status:  statusFailed,
+	}
+}

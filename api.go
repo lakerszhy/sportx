@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"net/url"
 	"slices"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -42,49 +44,10 @@ func fetchCategories() ([]category, error) {
 	categories := []category{hotCategory}
 	for _, v := range resp.Data {
 		for _, c := range v.Categories {
-			c.fetchSchedule = func() ([]match, error) {
-				return fetchSchedule(c.ID)
-			}
 			categories = append(categories, c)
 		}
 	}
 	return categories, nil
-}
-
-func fetchHotMatches() ([]match, error) {
-	resp, err := http.Get("https://matchweb.sports.qq.com/html/hotMatchList")
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("fetch hot match failed, status code: %d", resp.StatusCode)
-	}
-
-	var respData []json.RawMessage
-	if err := json.NewDecoder(resp.Body).Decode(&respData); err != nil {
-		return nil, err
-	}
-
-	if len(respData) < 2 {
-		return nil, nil
-	}
-
-	var code int
-	if err := json.Unmarshal(respData[0], &code); err != nil {
-		return nil, err
-	}
-	if code != 0 {
-		return nil, fmt.Errorf("fetch hot match failed, code: %d", code)
-	}
-
-	var data map[string][]match
-	if err := json.Unmarshal(respData[1], &data); err != nil {
-		return nil, err
-	}
-
-	return sortMatches(data)
 }
 
 func fetchSchedule(categoyID string) ([]match, error) {
@@ -166,4 +129,142 @@ func sortMatches(data map[string][]match) ([]match, error) {
 	}
 
 	return matches, nil
+}
+
+func fetchTextLives(matchID string) ([]textLive, error) {
+	// https://matchweb.sports.qq.com/kbs/matchDetail?mid=100000:10042400225&from=sportsh5
+	// 是否有文字直播
+	indexs, err := fetchTextLiveIndexes(matchID)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(indexs) == 0 {
+		return nil, nil
+	}
+
+	if len(indexs) > 40 {
+		indexs = indexs[:40]
+	}
+
+	ret, err := fetchIndexTexts(matchID, indexs)
+	if err != nil {
+		return nil, err
+	}
+
+	var textLives []textLive
+	for _, index := range indexs {
+		textLives = append(textLives, ret[index])
+	}
+
+	slices.SortStableFunc(textLives, func(a, b textLive) int {
+		indexA := strings.Split(a.IndexValue, "_")
+		indexB := strings.Split(b.IndexValue, "_")
+		if len(indexA) != 2 || len(indexB) != 2 {
+			return 0
+		}
+		retA, err := strconv.Atoi(indexA[0])
+		if err != nil {
+			return 0
+		}
+		retB, err := strconv.Atoi(indexB[0])
+		if err != nil {
+			return 0
+		}
+		return retA - retB
+	})
+
+	return textLives, nil
+}
+
+func fetchTextLiveIndexes(matchID string) ([]string, error) {
+	req, err := http.NewRequest(http.MethodGet,
+		"https://app.sports.qq.com/textLive/index",
+		nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	params := url.Values{}
+	params.Add("mid", matchID)
+
+	req.Header.Add("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36")
+	req.URL.RawQuery = params.Encode()
+
+	hresp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer hresp.Body.Close()
+
+	var resp struct {
+		Code int    `json:"code"`
+		Msg  string `json:"msg"`
+		Data struct {
+			Tabs []struct {
+				TabName string   `json:"tabName"`
+				Index   []string `json:"index"`
+			} `json:"tabs"`
+		} `json:"data"`
+	}
+	if err := json.NewDecoder(hresp.Body).Decode(&resp); err != nil {
+		return nil, err
+	}
+
+	if resp.Code != 0 {
+		return nil, fmt.Errorf("fetch text live index failed, code: %d, msg: %s",
+			resp.Code, resp.Msg)
+	}
+
+	if len(resp.Data.Tabs) == 0 {
+		return nil, nil
+	}
+
+	return resp.Data.Tabs[0].Index, nil
+}
+
+func fetchIndexTexts(matchID string, indexes []string) (map[string]textLive, error) {
+	ids := strings.Split(matchID, ":")
+	if len(ids) != 2 {
+		return nil, fmt.Errorf("invalid match id: %s", matchID)
+	}
+
+	req, err := http.NewRequest(http.MethodGet,
+		"https://matchweb.sports.qq.com/textLive/detail",
+		nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	params := url.Values{}
+	params.Add("competitionId", ids[0])
+	params.Add("matchId", ids[1])
+	params.Add("ids", strings.Join(indexes, ","))
+
+	req.Header.Add("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36")
+	req.URL.RawQuery = params.Encode()
+
+	hresp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer hresp.Body.Close()
+
+	var resp []json.RawMessage
+	if err := json.NewDecoder(hresp.Body).Decode(&resp); err != nil {
+		return nil, err
+	}
+
+	if len(resp) != 3 {
+		return nil, fmt.Errorf("fetch text live failed, resp: %v", resp)
+	}
+
+	var ret map[string]textLive
+	if err := json.Unmarshal(resp[1], &ret); err != nil {
+		return nil, err
+	}
+
+	return ret, nil
 }

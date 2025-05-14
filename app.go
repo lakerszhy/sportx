@@ -9,11 +9,13 @@ import (
 const (
 	categoryPanelWidth = 16
 	schedulePanelWidth = 32
+	textLivePanelWidth = 48
 )
 
 type app struct {
 	categoryPanel   categoryPanel
 	schedulePanel   schedulePanel
+	textLivePanel   textLivePanel
 	focus           focus
 	availableHeight int
 }
@@ -22,6 +24,7 @@ func newApp() app {
 	return app{
 		categoryPanel: newCategoryPanel(categoryPanelWidth),
 		schedulePanel: newSchedulePanel(schedulePanelWidth),
+		textLivePanel: newTextLivePanel(textLivePanelWidth),
 		focus:         focusCategory,
 	}
 }
@@ -31,6 +34,7 @@ func (a app) Init() tea.Cmd {
 		tea.SetWindowTitle("SportX"),
 		a.categoryPanel.Init(),
 		a.schedulePanel.Init(),
+		a.textLivePanel.Init(),
 	)
 }
 
@@ -47,15 +51,21 @@ func (a app) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case scheduleMsg:
 		a.schedulePanel, cmd = a.schedulePanel.Update(msg)
 		return a, cmd
+	case matchSelectionMsg, textLivesMsg:
+		a.textLivePanel, cmd = a.textLivePanel.Update(msg)
+		return a, cmd
 	case tea.WindowSizeMsg:
 		a.availableHeight = msg.Height - borderStyle.GetVerticalBorderSize()
 		a.categoryPanel.SetHeight(a.availableHeight)
 		a.schedulePanel.SetHeight(a.availableHeight)
+		a.textLivePanel.SetHeight(a.availableHeight)
 	case spinner.TickMsg:
 		var cmds []tea.Cmd
 		a.categoryPanel, cmd = a.categoryPanel.Update(msg)
 		cmds = append(cmds, cmd)
 		a.schedulePanel, cmd = a.schedulePanel.Update(msg)
+		cmds = append(cmds, cmd)
+		a.textLivePanel, cmd = a.textLivePanel.Update(msg)
 		cmds = append(cmds, cmd)
 		return a, tea.Batch(cmds...)
 	case tea.KeyMsg:
@@ -86,6 +96,9 @@ func (a app) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (a app) View() string {
 	categoryView := a.categoryPanel.View()
 	scheduleView := a.schedulePanel.View()
+	textLiveView := borderStyle.Width(textLivePanelWidth).
+		Height(a.availableHeight).
+		Render(a.textLivePanel.View())
 
 	switch a.focus {
 	case focusCategory:
@@ -108,7 +121,11 @@ func (a app) View() string {
 			Render(scheduleView)
 	}
 
-	return lipgloss.JoinHorizontal(lipgloss.Left, categoryView, scheduleView)
+	return lipgloss.JoinHorizontal(lipgloss.Left,
+		categoryView,
+		scheduleView,
+		textLiveView,
+	)
 }
 
 type focus int

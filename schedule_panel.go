@@ -13,11 +13,12 @@ import (
 )
 
 type schedulePanel struct {
-	width    int
-	list     list.Model
-	spinner  spinner.Model
-	msg      scheduleMsg
-	category category
+	width         int
+	list          list.Model
+	spinner       spinner.Model
+	msg           scheduleMsg
+	category      category
+	selectedMatch *match
 }
 
 func newSchedulePanel(width int) schedulePanel {
@@ -55,19 +56,28 @@ func (s schedulePanel) Update(msg tea.Msg) (schedulePanel, tea.Cmd) {
 	case categorySelectionMsg:
 		s.category = category(msg)
 		s.list.ResetSelected()
+
 		cmd = func() tea.Msg {
 			return newScheduleLoadingMsg(s.category)
 		}
-		cmds = append(cmds, s.spinner.Tick, cmd)
+		cmds = append(cmds, cmd)
 
 		cmd = func() tea.Msg {
-			schedule, err := s.category.fetchSchedule()
+			schedule, err := fetchSchedule(s.category.ID)
 			if err != nil {
 				return newScheduleFailedMsg(s.category, err)
 			}
 			return newScheduleLoadedMsg(s.category, schedule)
 		}
 		cmds = append(cmds, cmd)
+
+		cmds = append(cmds, s.spinner.Tick)
+
+		cmd = func() tea.Msg {
+			return matchSelectionMsg("")
+		}
+		cmds = append(cmds, cmd)
+
 		return s, tea.Batch(cmds...)
 	case scheduleMsg:
 		if !s.category.equal(msg.category) {
@@ -77,28 +87,42 @@ func (s schedulePanel) Update(msg tea.Msg) (schedulePanel, tea.Cmd) {
 		s.msg = msg
 		if msg.isSuccess() {
 			var items []list.Item
-			for _, category := range msg.matches {
-				items = append(items, category)
+			for _, m := range msg.matches {
+				items = append(items, m)
 			}
 			s.list.SetItems(items)
 		}
 
 		if msg.isSuccess() || msg.isFailed() {
 			cmd = tea.Tick(10*time.Second, func(t time.Time) tea.Msg {
-				schdule, err := s.category.fetchSchedule()
+				schedule, err := fetchSchedule(msg.category.ID)
 				if err != nil {
 					return newScheduleFailedMsg(s.category, err)
 				}
-				return newScheduleLoadedMsg(s.category, schdule)
+				return newScheduleLoadedMsg(s.category, schedule)
 			})
-			return s, cmd
+			cmds = append(cmds, cmd)
 		}
-
-		return s, nil
 	}
 
 	s.list, cmd = s.list.Update(msg)
-	return s, cmd
+	cmds = append(cmds, cmd)
+
+	selection, ok := s.list.SelectedItem().(match)
+	if !ok {
+		s.selectedMatch = nil
+		return s, tea.Batch(cmds...)
+	}
+
+	if s.selectedMatch == nil || selection.MID != s.selectedMatch.MID {
+		cmd = func() tea.Msg {
+			return matchSelectionMsg(selection.MID)
+		}
+		cmds = append(cmds, cmd)
+		s.selectedMatch = &selection
+	}
+
+	return s, tea.Batch(cmds...)
 }
 
 func (s schedulePanel) View() string {
