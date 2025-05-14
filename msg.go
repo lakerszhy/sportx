@@ -26,7 +26,7 @@ func (s status) isFailed() bool {
 }
 
 type categoriesMsg struct {
-	Categories []category
+	categories []category
 	err        error
 	status
 }
@@ -39,7 +39,7 @@ func newCategoriesLoadingMsg() categoriesMsg {
 
 func newCategoriesLoadedMsg(categories []category) categoriesMsg {
 	return categoriesMsg{
-		Categories: categories,
+		categories: categories,
 		status:     statusSuccess,
 	}
 }
@@ -48,5 +48,43 @@ func newCategoriesFailedMsg(err error) categoriesMsg {
 	return categoriesMsg{
 		err:    err,
 		status: statusFailed,
+	}
+}
+
+type categorySelectionMsg category
+
+type scheduleMsg struct {
+	category category
+	matches  []match
+	err      error
+	status
+}
+
+func newScheduleInitialMsg() scheduleMsg {
+	return scheduleMsg{
+		status: statusInitial,
+	}
+}
+
+func newScheduleLoadingMsg(category category) scheduleMsg {
+	return scheduleMsg{
+		category: category,
+		status:   statusLoading,
+	}
+}
+
+func newScheduleLoadedMsg(category category, matches []match) scheduleMsg {
+	return scheduleMsg{
+		category: category,
+		matches:  matches,
+		status:   statusSuccess,
+	}
+}
+
+func newScheduleFailedMsg(category category, err error) scheduleMsg {
+	return scheduleMsg{
+		category: category,
+		err:      err,
+		status:   statusFailed,
 	}
 }

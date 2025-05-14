@@ -61,16 +61,32 @@ func (c categoryPanel) Update(msg tea.Msg) (categoryPanel, tea.Cmd) {
 	case categoriesMsg:
 		c.msg = msg
 		if msg.isSuccess() {
+			if len(msg.categories) == 0 {
+				return c, nil
+			}
+
+			cmd = func() tea.Msg {
+				return categorySelectionMsg(msg.categories[0])
+			}
+
 			var items []list.Item
-			for _, category := range msg.Categories {
+			for _, category := range msg.categories {
 				items = append(items, category)
 			}
 			c.list.SetItems(items)
 		}
-		return c, nil
+		return c, cmd
 	}
 
+	before, ok1 := c.list.SelectedItem().(category)
 	c.list, cmd = c.list.Update(msg)
+	after, ok2 := c.list.SelectedItem().(category)
+	if ok1 && ok2 && !before.equal(after) {
+		cmd = func() tea.Msg {
+			return categorySelectionMsg(after)
+		}
+	}
+
 	return c, cmd
 }
 
@@ -85,7 +101,7 @@ func (c categoryPanel) View() string {
 		return "加载失败: " + c.msg.err.Error()
 	}
 
-	if c.msg.isSuccess() && len(c.msg.Categories) == 0 {
+	if c.msg.isSuccess() && len(c.msg.categories) == 0 {
 		return lipgloss.NewStyle().Width(c.width).
 			AlignHorizontal(lipgloss.Center).
 			Render("暂无数据")
