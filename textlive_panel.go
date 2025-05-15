@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -119,14 +120,35 @@ func (t textLivePanel) View() string {
 	}
 
 	var b strings.Builder
+
+	goal := fmt.Sprintf("%s %s - %s",
+		t.msg.textLives[0].Quarter.Quarter,
+		t.msg.textLives[0].LeftGoal,
+		t.msg.textLives[0].RightGoal,
+	)
+	goalView := lipgloss.NewStyle().
+		Background(lipgloss.Color("62")).
+		Foreground(lipgloss.Color("230")).
+		Bold(true).
+		Padding(0, 1).
+		Render(goal)
+	b.WriteString(goalView + "\n\n")
+
 	for _, v := range t.msg.textLives {
-		b.WriteString(v.Content + "\n")
+		content := fmt.Sprintf("%s %s", v.Quarter.Time, v.Content)
+		if v.Plus != "" {
+			content = fmt.Sprintf("%s %s(%s-%s)", content, v.Plus, v.LeftGoal, v.RightGoal)
+		}
+		if strings.TrimSpace(content) != "" {
+			b.WriteString(content + "\n")
+		}
 	}
 
 	return lipgloss.NewStyle().
 		Height(t.height).
 		MaxHeight(t.height).
 		Width(t.width).
+		Padding(0, 1).
 		Render(b.String())
 }
 
