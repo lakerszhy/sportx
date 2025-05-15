@@ -72,3 +72,12 @@ type textLive struct {
 func (t textLive) FilterValue() string {
 	return t.Content
 }
+
+type statistics struct {
+	goal goalStatistics
+}
+
+type goalStatistics struct {
+	Head []string   `json:"head"`
+	Rows [][]string `json:"rows"`
+}

@@ -306,3 +306,58 @@ func fetchIndexTexts(matchID string, indexes []string) (map[string]textLive, err
 
 	return ret, nil
 }
+
+func fetchStatistics(matchID string) (*statistics, error) {
+	req, err := http.NewRequest(http.MethodGet,
+		"https://app.sports.qq.com/match/statDetail",
+		nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	params := url.Values{}
+	params.Add("mid", matchID)
+
+	req.Header.Add("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36")
+	req.URL.RawQuery = params.Encode()
+
+	hresp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer hresp.Body.Close()
+
+	var resp struct {
+		Code int    `json:"code"`
+		Msg  string `json:"msg"`
+		Data struct {
+			Stats []struct {
+				Type  string           `json:"type"`
+				Goals []goalStatistics `json:"goals"`
+			} `json:"stats"`
+		} `json:"data"`
+	}
+
+	if err := json.NewDecoder(hresp.Body).Decode(&resp); err != nil {
+		return nil, err
+	}
+
+	if resp.Code != 0 {
+		return nil, fmt.Errorf("fetch statistics failed, code: %d, msg: %s",
+			resp.Code, resp.Msg)
+	}
+
+	var g goalStatistics
+	for _, v := range resp.Data.Stats {
+		if v.Type == "12" && len(v.Goals) > 0 {
+			g = v.Goals[0]
+			break
+		}
+	}
+
+	return &statistics{
+		goal: g,
+	}, nil
+
+}
