@@ -96,6 +96,7 @@ func (s statisticsPanel) onStatisticsMsg(msg statisticsMsg) (statisticsPanel, te
 		lipgloss.Left,
 		s.goalView(s.msg.statistics.goal, team),
 		s.teamView(s.msg.statistics.teamStatistics, team),
+		s.playerView(s.msg.statistics.playerStatistics, team),
 	)
 	s.viewport.SetContent(content)
 
@@ -169,7 +170,10 @@ func (s statisticsPanel) goalView(goal *goalStatistics, team *team) string {
 			Cell:   lipgloss.NewStyle().Padding(0, 1),
 		}),
 	)
-	return t.View() + "\n"
+	return lipgloss.NewStyle().
+		Width(s.viewport.Width).
+		AlignHorizontal(lipgloss.Center).
+		Render(t.View()) + "\n"
 }
 
 func (s *statisticsPanel) teamView(statistics []teamStatistics, team *team) string {
@@ -200,7 +204,82 @@ func (s *statisticsPanel) teamView(statistics []teamStatistics, team *team) stri
 		}),
 	)
 	return t.View() + "\n"
+}
 
+func (s statisticsPanel) playerView(statistics [][]playerStatistics, team *team) string {
+	if len(statistics) == 0 || team == nil {
+		return ""
+	}
+
+	var tables []table.Model
+	columnWidthes := s.columnWidthes(statistics)
+
+	for _, v := range statistics {
+		columns := []table.Column{}
+		rows := []table.Row{}
+		for _, vv := range v {
+			for k, h := range vv.Head {
+				columns = append(columns, table.Column{Title: h, Width: columnWidthes[k]})
+			}
+			if len(vv.Row) > 0 {
+				if len(vv.Row) > 2 && vv.Row[2] == "0'0\"" {
+					continue
+				}
+				rows = append(rows, table.Row(vv.Row))
+			}
+		}
+		t := table.New(
+			table.WithFocused(false),
+			table.WithColumns(columns),
+			table.WithRows(rows),
+			table.WithHeight(1+len(rows)),
+			table.WithStyles(table.Styles{
+				Header: lipgloss.NewStyle().Padding(0, 1),
+				Cell:   lipgloss.NewStyle().Padding(0, 1),
+			}),
+		)
+		tables = append(tables, t)
+	}
+
+	if len(tables) >= 2 {
+		tables[0].Columns()[0].Title = team.LeftName
+		tables[1].Columns()[0].Title = team.RightName
+	}
+
+	content := make([]string, len(tables))
+	for k, v := range tables {
+		content[k] = v.View() + "\n"
+	}
+
+	return lipgloss.JoinVertical(
+		lipgloss.Left,
+		content...,
+	)
+}
+
+func (s statisticsPanel) columnWidthes(statistics [][]playerStatistics) []int {
+	var columnWidth []int
+	for _, v := range statistics {
+		for _, vv := range v {
+			for _, h := range vv.Head {
+				columnWidth = append(columnWidth, ansi.StringWidth(h))
+			}
+			for k, r := range vv.Row {
+				w := ansi.StringWidth(r)
+				if w > columnWidth[k] {
+					columnWidth[k] = w
+				}
+			}
+		}
+	}
+
+	for k, v := range columnWidth {
+		if v > 14 {
+			columnWidth[k] = 14
+		}
+	}
+
+	return columnWidth
 }
 
 func (s *statisticsPanel) SetSize(width, height int) {

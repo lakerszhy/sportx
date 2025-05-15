@@ -334,9 +334,10 @@ func fetchStatistics(matchID string) (*statistics, error) {
 		Data struct {
 			TeamInfo team `json:"teamInfo"`
 			Stats    []struct {
-				Type      string           `json:"type"`
-				Goals     []goalStatistics `json:"goals"`
-				TeamStats []teamStatistics `json:"teamStats"`
+				Type        string           `json:"type"`
+				Goals       []goalStatistics `json:"goals"`
+				TeamStats   []teamStatistics `json:"teamStats"`
+				PlayerStats json.RawMessage  `json:"playerStats"`
 			} `json:"stats"`
 		} `json:"data"`
 	}
@@ -352,18 +353,44 @@ func fetchStatistics(matchID string) (*statistics, error) {
 
 	var g *goalStatistics
 	var t []teamStatistics
+	var p []playerStatistics
 	for _, v := range resp.Data.Stats {
 		if v.Type == "12" && len(v.Goals) > 0 {
 			g = &v.Goals[0]
 		} else if v.Type == "14" {
 			t = v.TeamStats
+		} else if v.Type == "15" {
+			err := json.Unmarshal(v.PlayerStats, &p)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
 	return &statistics{
-		team:           &resp.Data.TeamInfo,
-		goal:           g,
-		teamStatistics: t,
+		team:             &resp.Data.TeamInfo,
+		goal:             g,
+		teamStatistics:   t,
+		playerStatistics: splitPlayerStatistics(p),
 	}, nil
+}
 
+func splitPlayerStatistics(s []playerStatistics) [][]playerStatistics {
+	var teams [][]playerStatistics
+	var players []playerStatistics
+
+	for _, v := range s {
+		if len(v.Head) == 0 && len(v.Row) == 0 {
+			continue
+		}
+
+		if len(v.Head) > 0 && len(players) > 0 {
+			teams = append(teams, players)
+			players = []playerStatistics{}
+		}
+		players = append(players, v)
+	}
+	teams = append(teams, players)
+
+	return teams
 }
