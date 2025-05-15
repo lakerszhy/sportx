@@ -74,7 +74,13 @@ func (t textLive) FilterValue() string {
 }
 
 type statistics struct {
-	goal goalStatistics
+	team *team
+	goal *goalStatistics
+}
+
+type team struct {
+	LeftName  string `json:"leftName"`
+	RightName string `json:"rightName"`
 }
 
 type goalStatistics struct {

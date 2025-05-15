@@ -6,6 +6,7 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/x/ansi"
 )
 
 type statisticsPanel struct {
@@ -106,15 +107,31 @@ func (s statisticsPanel) View(focused bool) string {
 			Render("没有数据")
 	}
 
-	content := ""
 	goal := s.msg.statistics.goal
-	columns := []table.Column{}
-	rows := []table.Row{}
+	team := s.msg.statistics.team
+	if goal == nil || team == nil {
+		return style.AlignHorizontal(lipgloss.Center).
+			Render("没有数据")
+	}
+
+	teamNameWidth := ansi.StringWidth(team.LeftName)
+	if ansi.StringWidth(team.RightName) > teamNameWidth {
+		teamNameWidth = ansi.StringWidth(team.RightName)
+	}
+
+	columns := []table.Column{
+		{Title: "", Width: teamNameWidth},
+	}
 	for _, v := range goal.Head {
 		columns = append(columns, table.Column{Title: v, Width: 6})
 	}
-	for i := range goal.Rows {
-		rows = append(rows, goal.Rows[i])
+
+	rows := []table.Row{
+		{team.LeftName},
+		{team.RightName},
+	}
+	for i := range len(rows) {
+		rows[i] = append(rows[i], goal.Rows[i]...)
 	}
 
 	t := table.New(
@@ -122,10 +139,12 @@ func (s statisticsPanel) View(focused bool) string {
 		table.WithColumns(columns),
 		table.WithRows(rows),
 		table.WithHeight(1+len(rows)),
+		table.WithStyles(table.Styles{
+			Header: lipgloss.NewStyle().Padding(0, 1),
+			Cell:   lipgloss.NewStyle().Padding(0, 1),
+		}),
 	)
-	content = t.View()
-
-	s.viewport.SetContent(content)
+	s.viewport.SetContent(t.View())
 
 	return style.Render(s.viewport.View())
 }

@@ -332,7 +332,8 @@ func fetchStatistics(matchID string) (*statistics, error) {
 		Code int    `json:"code"`
 		Msg  string `json:"msg"`
 		Data struct {
-			Stats []struct {
+			TeamInfo team `json:"teamInfo"`
+			Stats    []struct {
 				Type  string           `json:"type"`
 				Goals []goalStatistics `json:"goals"`
 			} `json:"stats"`
@@ -348,15 +349,16 @@ func fetchStatistics(matchID string) (*statistics, error) {
 			resp.Code, resp.Msg)
 	}
 
-	var g goalStatistics
+	var g *goalStatistics
 	for _, v := range resp.Data.Stats {
 		if v.Type == "12" && len(v.Goals) > 0 {
-			g = v.Goals[0]
+			g = &v.Goals[0]
 			break
 		}
 	}
 
 	return &statistics{
+		team: &resp.Data.TeamInfo,
 		goal: g,
 	}, nil
 
