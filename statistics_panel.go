@@ -1,6 +1,8 @@
 package main
 
 import (
+	"time"
+
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/table"
 	"github.com/charmbracelet/bubbles/viewport"
@@ -71,14 +73,44 @@ func (s statisticsPanel) Update(msg tea.Msg) (statisticsPanel, tea.Cmd) {
 
 		return s, tea.Batch(cmds...)
 	case statisticsMsg:
-		if s.matchID != msg.matchID {
-			return s, nil
-		}
-		s.msg = msg
+		s, cmd = s.onStatisticsMsg(msg)
+		return s, cmd
 	}
 
 	s.viewport, cmd = s.viewport.Update(msg)
 	return s, cmd
+}
+
+func (s statisticsPanel) onStatisticsMsg(msg statisticsMsg) (statisticsPanel, tea.Cmd) {
+	if s.matchID != msg.matchID {
+		return s, nil
+	}
+	s.msg = msg
+
+	if !s.msg.isSuccess() {
+		return s, nil
+	}
+
+	team := s.msg.statistics.team
+	content := lipgloss.JoinVertical(
+		lipgloss.Left,
+		s.goalView(s.msg.statistics.goal, team),
+		s.teamView(s.msg.statistics.teamStatistics, team),
+	)
+	s.viewport.SetContent(content)
+
+	if msg.status.isSuccess() || msg.status.isFailed() {
+		cmd := tea.Tick(time.Second*10, func(t time.Time) tea.Msg {
+			staticstics, err := fetchStatistics(msg.matchID)
+			if err != nil {
+				return newStatisticsFailedMsg(msg.matchID, err)
+			}
+			return newStatisticsLoadedMsg(msg.matchID, staticstics)
+		})
+		return s, cmd
+	}
+
+	return s, nil
 }
 
 func (s statisticsPanel) View(focused bool) string {
@@ -86,41 +118,34 @@ func (s statisticsPanel) View(focused bool) string {
 	if focused {
 		style = borderFocusedStyle
 	}
-	style = style.Width(s.viewport.Width).Height(s.viewport.Height)
+	style = style.Width(s.viewport.Width).Height(s.viewport.Height).AlignHorizontal(lipgloss.Center)
 
 	if s.msg.isInitial() {
-		return style.AlignHorizontal(lipgloss.Center).Render("")
+		return style.Render("")
 	}
 
 	if s.msg.isLoading() {
-		return style.AlignHorizontal(lipgloss.Center).
-			Render(s.spinner.View() + "加载中...")
+		return style.Render(s.spinner.View() + "加载中...")
 	}
 
 	if s.msg.isFailed() {
-		return style.AlignHorizontal(lipgloss.Center).
-			Render("加载失败: " + s.msg.err.Error())
+		return style.Render("加载失败: " + s.msg.err.Error())
 	}
 
 	if s.msg.statistics == nil {
-		return style.AlignHorizontal(lipgloss.Center).
-			Render("没有数据")
+		return style.Render("没有数据")
 	}
 
-	goal := s.msg.statistics.goal
-	team := s.msg.statistics.team
+	return style.Render(s.viewport.View())
+}
+
+func (s statisticsPanel) goalView(goal *goalStatistics, team *team) string {
 	if goal == nil || team == nil {
-		return style.AlignHorizontal(lipgloss.Center).
-			Render("没有数据")
-	}
-
-	teamNameWidth := ansi.StringWidth(team.LeftName)
-	if ansi.StringWidth(team.RightName) > teamNameWidth {
-		teamNameWidth = ansi.StringWidth(team.RightName)
+		return ""
 	}
 
 	columns := []table.Column{
-		{Title: "", Width: teamNameWidth},
+		{Title: "", Width: team.width()},
 	}
 	for _, v := range goal.Head {
 		columns = append(columns, table.Column{Title: v, Width: 6})
@@ -144,9 +169,38 @@ func (s statisticsPanel) View(focused bool) string {
 			Cell:   lipgloss.NewStyle().Padding(0, 1),
 		}),
 	)
-	s.viewport.SetContent(t.View())
+	return t.View() + "\n"
+}
 
-	return style.Render(s.viewport.View())
+func (s *statisticsPanel) teamView(statistics []teamStatistics, team *team) string {
+	if len(statistics) == 0 || team == nil {
+		return ""
+	}
+
+	columns := []table.Column{
+		{Title: "", Width: team.width()},
+	}
+	firstRow := table.Row{team.LeftName}
+	secondRow := table.Row{team.RightName}
+
+	for _, v := range statistics {
+		columns = append(columns, table.Column{Title: v.Text, Width: ansi.StringWidth(v.Text)})
+		firstRow = append(firstRow, v.LeftVal)
+		secondRow = append(secondRow, v.RightVal)
+	}
+
+	t := table.New(
+		table.WithFocused(false),
+		table.WithColumns(columns),
+		table.WithRows([]table.Row{firstRow, secondRow}),
+		table.WithHeight(3),
+		table.WithStyles(table.Styles{
+			Header: lipgloss.NewStyle().Padding(0, 1),
+			Cell:   lipgloss.NewStyle().Padding(0, 1),
+		}),
+	)
+	return t.View() + "\n"
+
 }
 
 func (s *statisticsPanel) SetSize(width, height int) {

@@ -1,5 +1,9 @@
 package main
 
+import (
+	"github.com/charmbracelet/x/ansi"
+)
+
 var hotCategory = category{
 	ID:   "hot",
 	Name: "热门",
@@ -74,8 +78,9 @@ func (t textLive) FilterValue() string {
 }
 
 type statistics struct {
-	team *team
-	goal *goalStatistics
+	team           *team
+	goal           *goalStatistics
+	teamStatistics []teamStatistics
 }
 
 type team struct {
@@ -83,7 +88,22 @@ type team struct {
 	RightName string `json:"rightName"`
 }
 
+func (t team) width() int {
+	left := ansi.StringWidth(t.LeftName)
+	right := ansi.StringWidth(t.RightName)
+	if left > right {
+		return left
+	}
+	return right
+}
+
 type goalStatistics struct {
 	Head []string   `json:"head"`
 	Rows [][]string `json:"rows"`
+}
+
+type teamStatistics struct {
+	LeftVal  string `json:"leftVal"`
+	RightVal string `json:"rightVal"`
+	Text     string `json:"text"`
 }

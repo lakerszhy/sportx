@@ -84,7 +84,7 @@ func (t textLivePanel) Update(msg tea.Msg) (textLivePanel, tea.Cmd) {
 		t.msg = msg
 
 		if t.msg.hasData && (msg.isSuccess() || msg.isFailed()) {
-			cmd = tea.Tick(10*time.Second, func(t time.Time) tea.Msg {
+			cmd = tea.Tick(5*time.Second, func(t time.Time) tea.Msg {
 				textLives, err := fetchTextLives(msg.matchID)
 				if err != nil {
 					return newTextLivesFailedMsg(msg.matchID, err)
