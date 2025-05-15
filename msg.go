@@ -94,6 +94,7 @@ type matchSelectionMsg string
 type textLivesMsg struct {
 	matchID   string
 	textLives []textLive
+	hasData   bool
 	err       error
 	status
 }
@@ -115,13 +116,23 @@ func newTextLivesLoadedMsg(matchID string, textLives []textLive) textLivesMsg {
 	return textLivesMsg{
 		matchID:   matchID,
 		textLives: textLives,
+		hasData:   true,
 		status:    statusSuccess,
+	}
+}
+
+func newTextLivesNoDataMsg(matchID string) textLivesMsg {
+	return textLivesMsg{
+		matchID: matchID,
+		hasData: false,
+		status:  statusSuccess,
 	}
 }
 
 func newTextLivesFailedMsg(matchID string, err error) textLivesMsg {
 	return textLivesMsg{
 		matchID: matchID,
+		hasData: true,
 		err:     err,
 		status:  statusFailed,
 	}

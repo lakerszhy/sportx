@@ -132,8 +132,6 @@ func sortMatches(data map[string][]match) ([]match, error) {
 }
 
 func fetchTextLives(matchID string) ([]textLive, error) {
-	// https://matchweb.sports.qq.com/kbs/matchDetail?mid=100000:10042400225&from=sportsh5
-	// 是否有文字直播
 	indexs, err := fetchTextLiveIndexes(matchID)
 	if err != nil {
 		return nil, err
@@ -175,6 +173,46 @@ func fetchTextLives(matchID string) ([]textLive, error) {
 	})
 
 	return textLives, nil
+}
+
+func fetchMatchHasTextLives(matchID string) (bool, error) {
+	req, err := http.NewRequest(http.MethodGet,
+		"https://matchweb.sports.qq.com/kbs/matchDetail",
+		nil,
+	)
+	if err != nil {
+		return false, err
+	}
+
+	params := url.Values{}
+	params.Add("mid", matchID)
+
+	req.Header.Add("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36")
+	req.URL.RawQuery = params.Encode()
+
+	hresp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return false, err
+	}
+	defer hresp.Body.Close()
+
+	var resp struct {
+		Code int    `json:"code"`
+		Msg  string `json:"msg"`
+		Data struct {
+			IsHasTextLive bool `json:"isHasTextLive"`
+		} `json:"data"`
+	}
+	if err := json.NewDecoder(hresp.Body).Decode(&resp); err != nil {
+		return false, err
+	}
+
+	if resp.Code != 0 {
+		return false, fmt.Errorf("fetch match has text live sfailed, code: %d, msg: %s",
+			resp.Code, resp.Msg)
+	}
+
+	return resp.Data.IsHasTextLive, nil
 }
 
 func fetchTextLiveIndexes(matchID string) ([]string, error) {

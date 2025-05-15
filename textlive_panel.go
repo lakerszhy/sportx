@@ -2,6 +2,7 @@ package main
 
 import (
 	"strings"
+	"time"
 
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
@@ -56,6 +57,13 @@ func (t textLivePanel) Update(msg tea.Msg) (textLivePanel, tea.Cmd) {
 		cmds = append(cmds, cmd)
 
 		cmd = func() tea.Msg {
+			hasData, err := fetchMatchHasTextLives(t.matchID)
+			if err != nil {
+				return newTextLivesFailedMsg(t.matchID, err)
+			}
+			if !hasData {
+				return newTextLivesNoDataMsg(t.matchID)
+			}
 			textLives, err := fetchTextLives(t.matchID)
 			if err != nil {
 				return newTextLivesFailedMsg(t.matchID, err)
@@ -73,7 +81,17 @@ func (t textLivePanel) Update(msg tea.Msg) (textLivePanel, tea.Cmd) {
 		}
 
 		t.msg = msg
-		return t, nil
+
+		if t.msg.hasData && (msg.isSuccess() || msg.isFailed()) {
+			cmd = tea.Tick(10*time.Second, func(t time.Time) tea.Msg {
+				textLives, err := fetchTextLives(msg.matchID)
+				if err != nil {
+					return newTextLivesFailedMsg(msg.matchID, err)
+				}
+				return newTextLivesLoadedMsg(msg.matchID, textLives)
+			})
+		}
+		return t, cmd
 	}
 
 	return t, nil
