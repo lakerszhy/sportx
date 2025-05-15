@@ -15,20 +15,18 @@ type categoryPanel struct {
 	msg     categoriesMsg
 	list    list.Model
 	spinner spinner.Model
-	width   int
 }
 
-func newCategoryPanel(width int) categoryPanel {
-	l := list.New([]list.Item{}, categoryDelegate{}, width, 0)
+func newCategoryPanel() categoryPanel {
+	l := list.New([]list.Item{}, categoryDelegate{}, 0, 0)
 	l.SetShowStatusBar(false)
 	l.SetShowFilter(false)
 	l.SetShowHelp(false)
 	l.SetShowTitle(false)
 	l.SetShowPagination(false)
 	return categoryPanel{
-		msg:   newCategoriesLoadingMsg(),
-		list:  l,
-		width: width,
+		msg:  newCategoriesLoadingMsg(),
+		list: l,
 		spinner: spinner.New(
 			spinner.WithSpinner(spinner.Dot),
 		),
@@ -90,28 +88,33 @@ func (c categoryPanel) Update(msg tea.Msg) (categoryPanel, tea.Cmd) {
 	return c, cmd
 }
 
-func (c categoryPanel) View() string {
+func (c categoryPanel) View(focused bool) string {
+	style := borderStyle
+	if focused {
+		style = borderFocusedStyle
+	}
+	style = style.Width(c.list.Width()).Height(c.list.Height())
+
 	if c.msg.isLoading() {
-		return lipgloss.NewStyle().Width(c.width).
-			AlignHorizontal(lipgloss.Center).
+		return style.AlignHorizontal(lipgloss.Center).
 			Render(c.spinner.View() + "加载中...")
 	}
 
 	if c.msg.isFailed() {
-		return "加载失败: " + c.msg.err.Error()
+		return style.AlignHorizontal(lipgloss.Center).
+			Render("加载失败: " + c.msg.err.Error())
 	}
 
 	if c.msg.isSuccess() && len(c.msg.categories) == 0 {
-		return lipgloss.NewStyle().Width(c.width).
-			AlignHorizontal(lipgloss.Center).
+		return style.AlignHorizontal(lipgloss.Center).
 			Render("暂无数据")
 	}
 
-	return c.list.View()
+	return style.Render(c.list.View())
 }
 
-func (c *categoryPanel) SetHeight(v int) {
-	c.list.SetHeight(v)
+func (c *categoryPanel) SetSize(width int, height int) {
+	c.list.SetSize(width, height)
 }
 
 type categoryDelegate struct{}

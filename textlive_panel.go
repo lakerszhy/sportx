@@ -99,23 +99,28 @@ func (t textLivePanel) Update(msg tea.Msg) (textLivePanel, tea.Cmd) {
 }
 
 func (t textLivePanel) View() string {
+	style := lipgloss.NewStyle().
+		Height(t.height).
+		MaxHeight(t.height).
+		Width(t.width).
+		Padding(1, 1)
+
 	if t.msg.isInitial() {
-		return ""
+		return style.AlignHorizontal(lipgloss.Center).Render("")
 	}
 
 	if t.msg.isLoading() {
-		return lipgloss.NewStyle().Width(t.width).
-			AlignHorizontal(lipgloss.Center).
+		return style.AlignHorizontal(lipgloss.Center).
 			Render(t.spinner.View() + "加载中...")
 	}
 
 	if t.msg.isFailed() {
-		return "加载失败: " + t.msg.err.Error()
+		return style.AlignHorizontal(lipgloss.Center).
+			Render("加载失败: " + t.msg.err.Error())
 	}
 
 	if t.msg.isSuccess() && len(t.msg.textLives) == 0 {
-		return lipgloss.NewStyle().Width(t.width).
-			AlignHorizontal(lipgloss.Center).
+		return style.AlignHorizontal(lipgloss.Center).
 			Render("暂无数据")
 	}
 
@@ -144,12 +149,7 @@ func (t textLivePanel) View() string {
 		}
 	}
 
-	return lipgloss.NewStyle().
-		Height(t.height).
-		MaxHeight(t.height).
-		Width(t.width).
-		Padding(0, 1).
-		Render(b.String())
+	return style.Render(b.String())
 }
 
 func (t *textLivePanel) SetHeight(v int) {

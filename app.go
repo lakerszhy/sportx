@@ -23,8 +23,8 @@ type app struct {
 
 func newApp() app {
 	return app{
-		categoryPanel:   newCategoryPanel(categoryPanelWidth),
-		schedulePanel:   newSchedulePanel(schedulePanelWidth),
+		categoryPanel:   newCategoryPanel(),
+		schedulePanel:   newSchedulePanel(),
 		textLivePanel:   newTextLivePanel(textLivePanelWidth),
 		statisticsPanel: newStatisticsPanel(),
 		focus:           focusCategory,
@@ -69,8 +69,8 @@ func (a app) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		a.availableHeight = msg.Height - borderStyle.GetVerticalBorderSize()
 		availableWidth := msg.Width - 4*borderStyle.GetHorizontalBorderSize() - categoryPanelWidth - schedulePanelWidth - textLivePanelWidth
-		a.categoryPanel.SetHeight(a.availableHeight)
-		a.schedulePanel.SetHeight(a.availableHeight)
+		a.categoryPanel.SetSize(categoryPanelWidth, a.availableHeight)
+		a.schedulePanel.SetSize(schedulePanelWidth, a.availableHeight)
 		a.textLivePanel.SetHeight(a.availableHeight)
 		a.statisticsPanel.SetSize(availableWidth, a.availableHeight)
 	case spinner.TickMsg:
@@ -112,51 +112,11 @@ func (a app) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (a app) View() string {
-	categoryView := a.categoryPanel.View()
-	scheduleView := a.schedulePanel.View()
-	textLiveView := borderStyle.Width(textLivePanelWidth).
-		Height(a.availableHeight).
-		Render(a.textLivePanel.View())
-	statisticsView := a.statisticsPanel.View()
-
-	switch a.focus {
-	case focusCategory:
-		categoryView = borderFocusedStyle.
-			Width(categoryPanelWidth).
-			Height(a.availableHeight).
-			Render(categoryView)
-		scheduleView = borderStyle.
-			Width(schedulePanelWidth).
-			Height(a.availableHeight).
-			Render(scheduleView)
-		statisticsView = borderStyle.Render(statisticsView)
-	case focusSchedule:
-		categoryView = borderStyle.
-			Width(categoryPanelWidth).
-			Height(a.availableHeight).
-			Render(categoryView)
-		scheduleView = borderFocusedStyle.
-			Width(schedulePanelWidth).
-			Height(a.availableHeight).
-			Render(scheduleView)
-		statisticsView = borderStyle.Render(statisticsView)
-	case focusStatistics:
-		categoryView = borderStyle.
-			Width(categoryPanelWidth).
-			Height(a.availableHeight).
-			Render(categoryView)
-		scheduleView = borderStyle.
-			Width(schedulePanelWidth).
-			Height(a.availableHeight).
-			Render(scheduleView)
-		statisticsView = borderFocusedStyle.Render(statisticsView)
-	}
-
 	return lipgloss.JoinHorizontal(lipgloss.Left,
-		categoryView,
-		scheduleView,
-		textLiveView,
-		statisticsView,
+		a.categoryPanel.View(a.focus == focusCategory),
+		a.schedulePanel.View(a.focus == focusSchedule),
+		a.statisticsPanel.View(a.focus == focusStatistics),
+		a.textLivePanel.View(),
 	)
 }
 

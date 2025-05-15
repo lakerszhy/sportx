@@ -13,7 +13,6 @@ import (
 )
 
 type schedulePanel struct {
-	width         int
 	list          list.Model
 	spinner       spinner.Model
 	msg           scheduleMsg
@@ -21,17 +20,16 @@ type schedulePanel struct {
 	selectedMatch *match
 }
 
-func newSchedulePanel(width int) schedulePanel {
-	l := list.New([]list.Item{}, matchDelegate{}, width, 0)
+func newSchedulePanel() schedulePanel {
+	l := list.New([]list.Item{}, matchDelegate{}, 0, 0)
 	l.SetShowStatusBar(false)
 	l.SetShowFilter(false)
 	l.SetShowHelp(false)
 	l.SetShowTitle(false)
 	l.SetShowPagination(false)
 	return schedulePanel{
-		list:  l,
-		width: width,
-		msg:   newScheduleInitialMsg(),
+		list: l,
+		msg:  newScheduleInitialMsg(),
 		spinner: spinner.New(
 			spinner.WithSpinner(spinner.Dot),
 		),
@@ -125,32 +123,37 @@ func (s schedulePanel) Update(msg tea.Msg) (schedulePanel, tea.Cmd) {
 	return s, tea.Batch(cmds...)
 }
 
-func (s schedulePanel) View() string {
+func (s schedulePanel) View(focused bool) string {
+	style := borderStyle
+	if focused {
+		style = borderFocusedStyle
+	}
+	style = style.Width(s.list.Width()).Height(s.list.Height())
+
 	if s.msg.isInitial() {
-		return ""
+		return style.Render("")
 	}
 
 	if s.msg.isLoading() {
-		return lipgloss.NewStyle().Width(s.width).
-			AlignHorizontal(lipgloss.Center).
+		return style.AlignHorizontal(lipgloss.Center).
 			Render(s.spinner.View() + "加载中...")
 	}
 
 	if s.msg.isFailed() {
-		return "加载失败: " + s.msg.err.Error()
+		return style.AlignHorizontal(lipgloss.Center).
+			Render("加载失败: " + s.msg.err.Error())
 	}
 
 	if s.msg.isSuccess() && len(s.list.Items()) == 0 {
-		return lipgloss.NewStyle().Width(s.width).
-			AlignHorizontal(lipgloss.Center).
+		return style.AlignHorizontal(lipgloss.Center).
 			Render("暂无数据")
 	}
 
-	return s.list.View()
+	return style.Render(s.list.View())
 }
 
-func (s *schedulePanel) SetHeight(v int) {
-	s.list.SetHeight(v)
+func (s *schedulePanel) SetSize(width int, height int) {
+	s.list.SetSize(width, height)
 }
 
 type matchDelegate struct {
