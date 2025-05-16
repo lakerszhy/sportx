@@ -7,29 +7,18 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
 )
 
 type categoryPanel struct {
-	msg     categoriesMsg
-	list    list.Model
-	spinner spinner.Model
+	msg categoriesMsg
+	listPanel
 }
 
 func newCategoryPanel() categoryPanel {
-	l := list.New([]list.Item{}, categoryDelegate{}, 0, 0)
-	l.SetShowStatusBar(false)
-	l.SetShowFilter(false)
-	l.SetShowHelp(false)
-	l.SetShowTitle(false)
-	l.SetShowPagination(false)
 	return categoryPanel{
-		msg:  newCategoriesLoadingMsg(),
-		list: l,
-		spinner: spinner.New(
-			spinner.WithSpinner(spinner.Dot),
-		),
+		msg:       newCategoriesLoadingMsg(),
+		listPanel: newListPanel(categoryDelegate{}),
 	}
 }
 
@@ -89,32 +78,7 @@ func (c categoryPanel) Update(msg tea.Msg) (categoryPanel, tea.Cmd) {
 }
 
 func (c categoryPanel) View(focused bool) string {
-	style := borderStyle
-	if focused {
-		style = borderFocusedStyle
-	}
-	style = style.Width(c.list.Width()).Height(c.list.Height())
-
-	if c.msg.isLoading() {
-		return style.AlignHorizontal(lipgloss.Center).
-			Render(c.spinner.View() + "加载中...")
-	}
-
-	if c.msg.isFailed() {
-		return style.AlignHorizontal(lipgloss.Center).
-			Render("加载失败: " + c.msg.err.Error())
-	}
-
-	if c.msg.isSuccess() && len(c.msg.categories) == 0 {
-		return style.AlignHorizontal(lipgloss.Center).
-			Render("暂无数据")
-	}
-
-	return style.Render(c.list.View())
-}
-
-func (c *categoryPanel) SetSize(width int, height int) {
-	c.list.SetSize(width, height)
+	return c.render(focused, c.msg.status, c.msg.err)
 }
 
 type categoryDelegate struct{}

@@ -69,8 +69,8 @@ func (a app) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		a.availableHeight = msg.Height - borderStyle.GetVerticalBorderSize()
 		availableWidth := msg.Width - 4*borderStyle.GetHorizontalBorderSize() - categoryPanelWidth - schedulePanelWidth - textLivePanelWidth
-		a.categoryPanel.SetSize(categoryPanelWidth, a.availableHeight)
-		a.schedulePanel.SetSize(schedulePanelWidth, a.availableHeight)
+		a.categoryPanel.setSize(categoryPanelWidth, a.availableHeight)
+		a.schedulePanel.setSize(schedulePanelWidth, a.availableHeight)
 		a.textLivePanel.SetHeight(a.availableHeight)
 		a.statisticsPanel.SetSize(availableWidth, a.availableHeight)
 	case spinner.TickMsg:
