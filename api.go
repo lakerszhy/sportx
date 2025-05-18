@@ -357,7 +357,8 @@ func fetchStatistics(matchID string) (*statistics, error) {
 	for _, v := range resp.Data.Stats {
 		if v.Type == "12" && len(v.Goals) > 0 {
 			g = &v.Goals[0]
-		} else if v.Type == "14" {
+		} else if v.Type == "14" || v.Type == "102" {
+			// 14：篮球 102：足球
 			t = v.TeamStats
 		} else if v.Type == "15" {
 			err := json.Unmarshal(v.PlayerStats, &p)

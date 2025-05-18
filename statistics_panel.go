@@ -1,6 +1,9 @@
 package main
 
 import (
+	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/charmbracelet/bubbles/spinner"
@@ -181,29 +184,75 @@ func (s *statisticsPanel) teamView(statistics []teamStatistics, team *team) stri
 		return ""
 	}
 
-	columns := []table.Column{
-		{Title: "", Width: team.width()},
-	}
-	firstRow := table.Row{team.LeftName}
-	secondRow := table.Row{team.RightName}
+	leftRightWidth := 0
+	textWidth := 0
 
 	for _, v := range statistics {
-		columns = append(columns, table.Column{Title: v.Text, Width: ansi.StringWidth(v.Text)})
-		firstRow = append(firstRow, v.LeftVal)
-		secondRow = append(secondRow, v.RightVal)
+		t := ansi.StringWidth(v.Text)
+		if t > textWidth {
+			textWidth = t
+		}
+		l := ansi.StringWidth(v.LeftVal)
+		if l > leftRightWidth {
+			leftRightWidth = l
+		}
+		r := ansi.StringWidth(v.RightVal)
+		if r > leftRightWidth {
+			leftRightWidth = r
+		}
 	}
 
-	t := table.New(
-		table.WithFocused(false),
-		table.WithColumns(columns),
-		table.WithRows([]table.Row{firstRow, secondRow}),
-		table.WithHeight(3),
-		table.WithStyles(table.Styles{
-			Header: lipgloss.NewStyle().Padding(0, 1),
-			Cell:   lipgloss.NewStyle().Padding(0, 1),
-		}),
+	teamRow := fmt.Sprintf("%s%s%s",
+		team.LeftName,
+		lipgloss.NewStyle().Width(textWidth).Align(lipgloss.Center).Render("vs"),
+		team.RightName,
 	)
-	return t.View() + "\n"
+	teamRow = lipgloss.NewStyle().
+		Width(s.viewport.Width).
+		AlignHorizontal(lipgloss.Center).
+		Render(teamRow)
+
+	progressBarWidth := (s.viewport.Width - leftRightWidth*2 - textWidth) / 2
+	rows := []string{teamRow}
+	for _, v := range statistics {
+		leftVal := strings.TrimSuffix(v.LeftVal, "%")
+		rightVal := strings.TrimSuffix(v.RightVal, "%")
+		leftPercent := 0.0
+		rightPencent := 0.0
+		left, err1 := strconv.ParseFloat(leftVal, 64)
+		right, err2 := strconv.ParseFloat(rightVal, 64)
+		if err1 == nil && err2 == nil {
+			if left+right != 0 {
+				leftPercent = left / (left + right)
+				rightPencent = right / (left + right)
+			}
+		}
+		leftWidth := int(leftPercent * float64(progressBarWidth))
+		if leftWidth == 0 {
+			leftWidth = 1
+		}
+		rightWidth := int(rightPencent * float64(progressBarWidth))
+		if rightWidth == 0 {
+			rightWidth = 1
+		}
+		leftStyle := lipgloss.NewStyle().Width(progressBarWidth).Align(lipgloss.Right)
+		rightStyle := lipgloss.NewStyle().Width(progressBarWidth).Align(lipgloss.Left)
+		if leftPercent > rightPencent {
+			leftStyle = leftStyle.Foreground(focusedColor)
+		} else if rightPencent > leftPercent {
+			rightStyle = rightStyle.Foreground(focusedColor)
+		}
+		row := fmt.Sprintf("%s%s%s%s%s",
+			lipgloss.NewStyle().Width(leftRightWidth).Align(lipgloss.Left).Render(v.LeftVal),
+			leftStyle.Render(strings.Repeat("━", leftWidth)),
+			lipgloss.NewStyle().Width(textWidth).AlignHorizontal(lipgloss.Center).Render(v.Text),
+			rightStyle.Render(strings.Repeat("━", rightWidth)),
+			lipgloss.NewStyle().Width(leftRightWidth).Align(lipgloss.Right).Render(v.RightVal),
+		)
+		rows = append(rows, row)
+	}
+
+	return strings.Join(rows, "\n") + "\n"
 }
 
 func (s statisticsPanel) playerView(statistics [][]playerStatistics, team *team) string {
