@@ -103,7 +103,7 @@ func (s statisticsPanel) onStatisticsMsg(msg statisticsMsg) (statisticsPanel, te
 	)
 	s.viewport.SetContent(content)
 
-	if msg.status.isSuccess() || msg.status.isFailed() {
+	if msg.isSuccess() || msg.isFailed() {
 		cmd := tea.Tick(time.Second*10, func(t time.Time) tea.Msg {
 			staticstics, err := fetchStatistics(msg.matchID)
 			if err != nil {

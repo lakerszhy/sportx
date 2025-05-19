@@ -38,9 +38,7 @@ func fetchCategories() ([]category, error) {
 
 	categories := []category{hotCategory}
 	for _, v := range resp.Data {
-		for _, c := range v.Categories {
-			categories = append(categories, c)
-		}
+		categories = append(categories, v.Categories...)
 	}
 	return categories, nil
 }
@@ -338,7 +336,7 @@ func request(u string, p map[string]string, ret any) error {
 	if err != nil {
 		return err
 	}
-	defer hresp.Body.Close()
+	hresp.Body.Close() //nolint: errcheck
 
 	if hresp.StatusCode != http.StatusOK {
 		return fmt.Errorf("request %s failed: %d", u, hresp.StatusCode)

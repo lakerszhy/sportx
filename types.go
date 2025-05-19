@@ -32,12 +32,12 @@ const (
 
 type matchType string
 
-const (
-	matchTypeFootball   matchType = "1"
-	matchTypeBasketball matchType = "2"
-	matchTypeSnooker    matchType = "3"
-	matchTypeOther      matchType = "4"
-)
+// const (
+// 	matchTypeFootball   matchType = "1"
+// 	matchTypeBasketball matchType = "2"
+// 	matchTypeSnooker    matchType = "3"
+// 	matchTypeOther      matchType = "4"
+// )
 
 type match struct {
 	MID         string      `json:"mid"`
