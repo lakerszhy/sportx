@@ -336,7 +336,7 @@ func request(u string, p map[string]string, ret any) error {
 	if err != nil {
 		return err
 	}
-	hresp.Body.Close() //nolint: errcheck
+	defer hresp.Body.Close() //nolint: errcheck
 
 	if hresp.StatusCode != http.StatusOK {
 		return fmt.Errorf("request %s failed: %d", u, hresp.StatusCode)
