@@ -22,17 +22,12 @@ func fetchCategories() ([]category, error) {
 		} `json:"data"`
 	}
 
-	hresp, err := http.Get("https://matchweb.sports.qq.com/matchUnion/cateColumns")
+	err := request(
+		"https://matchweb.sports.qq.com/matchUnion/cateColumns",
+		nil,
+		&resp,
+	)
 	if err != nil {
-		return nil, err
-	}
-	defer hresp.Body.Close()
-
-	if hresp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("fetch categories failed: %d", hresp.StatusCode)
-	}
-
-	if err := json.NewDecoder(hresp.Body).Decode(&resp); err != nil {
 		return nil, err
 	}
 
@@ -57,35 +52,18 @@ func fetchSchedule(categoyID string) ([]match, error) {
 		Data map[string][]match `json:"data"`
 	}
 
-	req, err := http.NewRequest(http.MethodGet,
+	start := time.Now()
+	p := map[string]string{
+		"columnId":  categoyID,
+		"startTime": start.Format("2006-01-02"),
+		"endTime":   start.AddDate(0, 0, 7).Format("2006-01-02"),
+	}
+	err := request(
 		"https://matchweb.sports.qq.com/matchUnion/list",
-		nil,
+		p,
+		&resp,
 	)
 	if err != nil {
-		return nil, err
-	}
-
-	start := time.Now()
-	end := start.AddDate(0, 0, 7)
-	params := url.Values{}
-	params.Add("columnId", categoyID)
-	params.Add("startTime", start.Format("2006-01-02"))
-	params.Add("endTime", end.Format("2006-01-02"))
-
-	req.Header.Add("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36")
-	req.URL.RawQuery = params.Encode()
-
-	hresp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer hresp.Body.Close()
-
-	if hresp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("fetch schedule failed: %d", hresp.StatusCode)
-	}
-
-	if err := json.NewDecoder(hresp.Body).Decode(&resp); err != nil {
 		return nil, err
 	}
 
@@ -176,26 +154,6 @@ func fetchTextLives(matchID string) ([]textLive, error) {
 }
 
 func fetchMatchHasTextLives(matchID string) (bool, error) {
-	req, err := http.NewRequest(http.MethodGet,
-		"https://matchweb.sports.qq.com/kbs/matchDetail",
-		nil,
-	)
-	if err != nil {
-		return false, err
-	}
-
-	params := url.Values{}
-	params.Add("mid", matchID)
-
-	req.Header.Add("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36")
-	req.URL.RawQuery = params.Encode()
-
-	hresp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return false, err
-	}
-	defer hresp.Body.Close()
-
 	var resp struct {
 		Code int    `json:"code"`
 		Msg  string `json:"msg"`
@@ -203,7 +161,13 @@ func fetchMatchHasTextLives(matchID string) (bool, error) {
 			IsHasTextLive bool `json:"isHasTextLive"`
 		} `json:"data"`
 	}
-	if err := json.NewDecoder(hresp.Body).Decode(&resp); err != nil {
+
+	err := request(
+		"https://matchweb.sports.qq.com/kbs/matchDetail",
+		map[string]string{"mid": matchID},
+		&resp,
+	)
+	if err != nil {
 		return false, err
 	}
 
@@ -216,26 +180,6 @@ func fetchMatchHasTextLives(matchID string) (bool, error) {
 }
 
 func fetchTextLiveIndexes(matchID string) ([]string, error) {
-	req, err := http.NewRequest(http.MethodGet,
-		"https://app.sports.qq.com/textLive/index",
-		nil,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	params := url.Values{}
-	params.Add("mid", matchID)
-
-	req.Header.Add("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36")
-	req.URL.RawQuery = params.Encode()
-
-	hresp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer hresp.Body.Close()
-
 	var resp struct {
 		Code int    `json:"code"`
 		Msg  string `json:"msg"`
@@ -246,7 +190,13 @@ func fetchTextLiveIndexes(matchID string) ([]string, error) {
 			} `json:"tabs"`
 		} `json:"data"`
 	}
-	if err := json.NewDecoder(hresp.Body).Decode(&resp); err != nil {
+
+	err := request(
+		"https://app.sports.qq.com/textLive/index",
+		map[string]string{"mid": matchID},
+		&resp,
+	)
+	if err != nil {
 		return nil, err
 	}
 
@@ -268,30 +218,19 @@ func fetchIndexTexts(matchID string, indexes []string) (map[string]textLive, err
 		return nil, fmt.Errorf("invalid match id: %s", matchID)
 	}
 
-	req, err := http.NewRequest(http.MethodGet,
+	var resp []json.RawMessage
+
+	p := map[string]string{
+		"competitionId": ids[0],
+		"matchId":       ids[1],
+		"ids":           strings.Join(indexes, ","),
+	}
+	err := request(
 		"https://matchweb.sports.qq.com/textLive/detail",
-		nil,
+		p,
+		&resp,
 	)
 	if err != nil {
-		return nil, err
-	}
-
-	params := url.Values{}
-	params.Add("competitionId", ids[0])
-	params.Add("matchId", ids[1])
-	params.Add("ids", strings.Join(indexes, ","))
-
-	req.Header.Add("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36")
-	req.URL.RawQuery = params.Encode()
-
-	hresp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer hresp.Body.Close()
-
-	var resp []json.RawMessage
-	if err := json.NewDecoder(hresp.Body).Decode(&resp); err != nil {
 		return nil, err
 	}
 
@@ -308,26 +247,6 @@ func fetchIndexTexts(matchID string, indexes []string) (map[string]textLive, err
 }
 
 func fetchStatistics(matchID string) (*statistics, error) {
-	req, err := http.NewRequest(http.MethodGet,
-		"https://app.sports.qq.com/match/statDetail",
-		nil,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	params := url.Values{}
-	params.Add("mid", matchID)
-
-	req.Header.Add("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36")
-	req.URL.RawQuery = params.Encode()
-
-	hresp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer hresp.Body.Close()
-
 	var resp struct {
 		Code int    `json:"code"`
 		Msg  string `json:"msg"`
@@ -342,7 +261,12 @@ func fetchStatistics(matchID string) (*statistics, error) {
 		} `json:"data"`
 	}
 
-	if err := json.NewDecoder(hresp.Body).Decode(&resp); err != nil {
+	err := request(
+		"https://app.sports.qq.com/match/statDetail",
+		map[string]string{"mid": matchID},
+		&resp,
+	)
+	if err != nil {
 		return nil, err
 	}
 
@@ -394,4 +318,31 @@ func splitPlayerStatistics(s []playerStatistics) [][]playerStatistics {
 	teams = append(teams, players)
 
 	return teams
+}
+
+func request(u string, p map[string]string, ret any) error {
+	req, err := http.NewRequest(http.MethodGet, u, nil)
+	if err != nil {
+		return err
+	}
+
+	q := url.Values{}
+	for k, v := range p {
+		q.Add(k, v)
+	}
+
+	req.Header.Add("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36")
+	req.URL.RawQuery = q.Encode()
+
+	hresp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer hresp.Body.Close()
+
+	if hresp.StatusCode != http.StatusOK {
+		return fmt.Errorf("request %s failed: %d", u, hresp.StatusCode)
+	}
+
+	return json.NewDecoder(hresp.Body).Decode(&ret)
 }
