@@ -126,11 +126,17 @@ func (t textLivePanel) View() string {
 
 	var b strings.Builder
 
-	goal := fmt.Sprintf("%s %s - %s",
-		t.msg.textLives[0].Quarter.Quarter,
+	goal := fmt.Sprintf("%s - %s",
 		t.msg.textLives[0].LeftGoal,
 		t.msg.textLives[0].RightGoal,
 	)
+	if t.msg.textLives[0].Quarter.Quarter != "" {
+		goal = fmt.Sprintf("%s %s",
+			t.msg.textLives[0].Quarter.Quarter,
+			goal,
+		)
+	}
+
 	goalView := lipgloss.NewStyle().
 		Background(lipgloss.Color("62")).
 		Foreground(lipgloss.Color("230")).
@@ -140,7 +146,10 @@ func (t textLivePanel) View() string {
 	b.WriteString(goalView + "\n\n")
 
 	for _, v := range t.msg.textLives {
-		content := fmt.Sprintf("%s %s", v.Quarter.Time, v.Content)
+		content := v.Content
+		if v.Quarter.Time != "" {
+			content = fmt.Sprintf("%s %s", v.Quarter.Time, v.Content)
+		}
 		if v.Plus != "" {
 			content = fmt.Sprintf("%s %s(%s-%s)", content, v.Plus, v.LeftGoal, v.RightGoal)
 		}
