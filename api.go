@@ -54,7 +54,7 @@ func fetchSchedule(categoyID string) ([]match, error) {
 	p := map[string]string{
 		"columnId":  categoyID,
 		"startTime": start.Format("2006-01-02"),
-		"endTime":   start.AddDate(0, 0, 7).Format("2006-01-02"),
+		"endTime":   start.AddDate(0, 0, 5).Format("2006-01-02"),
 	}
 	err := request(
 		"https://matchweb.sports.qq.com/matchUnion/list",
