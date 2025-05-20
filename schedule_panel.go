@@ -162,17 +162,24 @@ func (d matchDelegate) Render(w io.Writer, m list.Model, index int, listItem lis
 		Align(lipgloss.Center).
 		Render(matchPeriod)
 
-	score := fmt.Sprintf("%s - %s", i.LeftGoal, i.RightGoal)
-	nameWith := (m.Width() - 2 - ansi.StringWidth(score)) / 2
+	desc := ""
+	if i.RightName == "" {
+		desc = ansi.Truncate(i.LeftName, m.Width()-2, "...")
+		desc = lipgloss.NewStyle().Width(m.Width() - 2).
+			Align(lipgloss.Center).Render(desc)
+	} else {
+		score := fmt.Sprintf("%s - %s", i.LeftGoal, i.RightGoal)
+		nameWith := (m.Width() - 2 - ansi.StringWidth(score)) / 2
 
-	leftName := ansi.Truncate(i.LeftName, nameWith, "...")
-	rightName := ansi.Truncate(i.RightName, nameWith, "...")
+		leftName := ansi.Truncate(i.LeftName, nameWith, "...")
+		rightName := ansi.Truncate(i.RightName, nameWith, "...")
 
-	desc := fmt.Sprintf("%s %s %s",
-		lipgloss.NewStyle().Width(nameWith).Align(lipgloss.Center).Render(leftName),
-		lipgloss.NewStyle().Align(lipgloss.Center).Render(score),
-		lipgloss.NewStyle().Width(nameWith).Align(lipgloss.Center).Render(rightName),
-	)
+		desc = fmt.Sprintf("%s %s %s",
+			lipgloss.NewStyle().Width(nameWith).Align(lipgloss.Center).Render(leftName),
+			lipgloss.NewStyle().Align(lipgloss.Center).Render(score),
+			lipgloss.NewStyle().Width(nameWith).Align(lipgloss.Center).Render(rightName),
+		)
+	}
 
 	style := lipgloss.NewStyle()
 	if index == m.Index() {

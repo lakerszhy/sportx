@@ -54,7 +54,9 @@ type match struct {
 }
 
 func (m match) isMatch() bool {
-	return m.MatchType != "4"
+	return m.MatchDesc != "NBA经典赛" &&
+		m.MatchDesc != "篮球直播节目" &&
+		m.MatchDesc != "发布会"
 }
 
 func (m match) FilterValue() string {
