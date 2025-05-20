@@ -22,12 +22,12 @@ func (c category) equal(v category) bool {
 	return c.ID == v.ID
 }
 
-type matchPeriod string
+type period string
 
 const (
-	matchPeriodComing     matchPeriod = "0"
-	matchPeriodInProgress matchPeriod = "1"
-	matchPeriodEnd        matchPeriod = "2"
+	periodComing     period = "0"
+	periodInProgress period = "1"
+	periodEnd        period = "2"
 )
 
 type matchType string
@@ -40,17 +40,17 @@ type matchType string
 // )
 
 type match struct {
-	MID         string      `json:"mid"`
-	MatchType   matchType   `json:"matchType"`
-	MatchDesc   string      `json:"matchDesc"`
-	StartTime   string      `json:"startTime"`
-	LeftName    string      `json:"leftName"`
-	LeftGoal    string      `json:"leftGoal"`
-	RightName   string      `json:"rightName"`
-	RightGoal   string      `json:"rightGoal"`
-	MatchPeriod matchPeriod `json:"matchPeriod"`
-	Quarter     string      `json:"quarter"`
-	QuarterTime string      `json:"quarterTime"`
+	MID         string    `json:"mid"`
+	MatchType   matchType `json:"matchType"`
+	MatchDesc   string    `json:"matchDesc"`
+	StartTime   string    `json:"startTime"`
+	LeftName    string    `json:"leftName"`
+	LeftGoal    string    `json:"leftGoal"`
+	RightName   string    `json:"rightName"`
+	RightGoal   string    `json:"rightGoal"`
+	MatchPeriod period    `json:"matchPeriod"`
+	Quarter     string    `json:"quarter"`
+	QuarterTime string    `json:"quarterTime"`
 }
 
 func (m match) isMatch() bool {
@@ -84,6 +84,7 @@ type statistics struct {
 	goal             *goalStatistics
 	teamStatistics   []teamStatistics
 	playerStatistics [][]playerStatistics
+	livePeriod       period
 }
 
 type team struct {

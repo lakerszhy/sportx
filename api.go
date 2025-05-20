@@ -249,8 +249,9 @@ func fetchStatistics(matchID string) (*statistics, error) {
 		Code int    `json:"code"`
 		Msg  string `json:"msg"`
 		Data struct {
-			TeamInfo team `json:"teamInfo"`
-			Stats    []struct {
+			TeamInfo   team   `json:"teamInfo"`
+			LivePeriod period `json:"livePeriod"`
+			Stats      []struct {
 				Type        string           `json:"type"`
 				Goals       []goalStatistics `json:"goals"`
 				TeamStats   []teamStatistics `json:"teamStats"`
@@ -294,6 +295,7 @@ func fetchStatistics(matchID string) (*statistics, error) {
 		team:             &resp.Data.TeamInfo,
 		goal:             g,
 		teamStatistics:   t,
+		livePeriod:       resp.Data.LivePeriod,
 		playerStatistics: splitPlayerStatistics(p),
 	}, nil
 }

@@ -103,7 +103,7 @@ func (s statisticsPanel) onStatisticsMsg(msg statisticsMsg) (statisticsPanel, te
 	)
 	s.viewport.SetContent(content)
 
-	if msg.isSuccess() || msg.isFailed() {
+	if s.shouldRefresh(msg) {
 		cmd := tea.Tick(time.Second*10, func(t time.Time) tea.Msg {
 			staticstics, err := fetchStatistics(msg.matchID)
 			if err != nil {
@@ -115,6 +115,18 @@ func (s statisticsPanel) onStatisticsMsg(msg statisticsMsg) (statisticsPanel, te
 	}
 
 	return s, nil
+}
+
+func (s statisticsPanel) shouldRefresh(msg statisticsMsg) bool {
+	if msg.isFailed() {
+		return true
+	}
+
+	if msg.isSuccess() && msg.statistics.livePeriod != periodEnd {
+		return true
+	}
+
+	return false
 }
 
 func (s statisticsPanel) View(focused bool) string {

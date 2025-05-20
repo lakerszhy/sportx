@@ -151,11 +151,11 @@ func (d matchDelegate) Render(w io.Writer, m list.Model, index int, listItem lis
 
 	matchPeriod := "未知"
 	switch i.MatchPeriod {
-	case matchPeriodComing:
+	case periodComing:
 		matchPeriod = "未开始"
-	case matchPeriodInProgress:
+	case periodInProgress:
 		matchPeriod = fmt.Sprintf("%s %s", i.Quarter, i.QuarterTime)
-	case matchPeriodEnd:
+	case periodEnd:
 		matchPeriod = "已结束"
 	}
 	matchPeriod = lipgloss.NewStyle().Width(m.Width()).
