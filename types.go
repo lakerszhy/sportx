@@ -69,10 +69,8 @@ type textLive struct {
 	RightGoal  string `json:"rightGoal"`
 	IndexValue string `json:"indexValue"`
 	Plus       string `json:"plus"`
-	Quarter    struct {
-		Quarter string `json:"quarter"`
-		Time    string `json:"time"`
-	} `json:"kbsInfo"`
+	Quarter    string `json:"quarter"`
+	Time       string `json:"time"`
 }
 
 func (t textLive) FilterValue() string {
