@@ -63,7 +63,3 @@ func (p listPanel) render(focused bool, status status, err error) string {
 func (p *listPanel) setSize(width int, height int) {
 	p.list.SetSize(width, height)
 }
-
-func (p listPanel) clear() {
-	p.list.SetItems([]list.Item{})
-}

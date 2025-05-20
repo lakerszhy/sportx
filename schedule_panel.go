@@ -43,7 +43,7 @@ func (s schedulePanel) Update(msg tea.Msg) (schedulePanel, tea.Cmd) {
 		return s, nil
 	case categorySelectionMsg:
 		s.category = category(msg)
-		s.clear()
+		s.list.SetItems([]list.Item{})
 
 		cmd = func() tea.Msg {
 			return newScheduleLoadingMsg(s.category)
