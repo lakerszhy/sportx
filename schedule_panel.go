@@ -42,55 +42,10 @@ func (s schedulePanel) Update(msg tea.Msg) (schedulePanel, tea.Cmd) {
 		}
 		return s, nil
 	case categorySelectionMsg:
-		s.category = category(msg)
-		s.list.SetItems([]list.Item{})
-
-		cmd = func() tea.Msg {
-			return newScheduleLoadingMsg(s.category)
-		}
-		cmds = append(cmds, cmd)
-
-		cmd = func() tea.Msg {
-			schedule, err := fetchSchedule(s.category.ID)
-			if err != nil {
-				return newScheduleFailedMsg(s.category, err)
-			}
-			return newScheduleLoadedMsg(s.category, schedule)
-		}
-		cmds = append(cmds, cmd)
-
-		cmds = append(cmds, s.spinner.Tick)
-
-		cmd = func() tea.Msg {
-			return matchSelectionMsg("")
-		}
-		cmds = append(cmds, cmd)
-
-		return s, tea.Batch(cmds...)
+		return s, s.onCategorySelectionMsg(msg)
 	case scheduleMsg:
-		if !s.category.equal(msg.category) {
-			return s, nil
-		}
-
-		s.msg = msg
-		if msg.isSuccess() {
-			var items []list.Item
-			for _, m := range msg.matches {
-				items = append(items, m)
-			}
-			s.list.SetItems(items)
-		}
-
-		if msg.isSuccess() || msg.isFailed() {
-			cmd = tea.Tick(cfg.scheduleRefreshInterval, func(time.Time) tea.Msg {
-				schedule, err := fetchSchedule(msg.category.ID)
-				if err != nil {
-					return newScheduleFailedMsg(s.category, err)
-				}
-				return newScheduleLoadedMsg(s.category, schedule)
-			})
-			cmds = append(cmds, cmd)
-		}
+		cmd = s.onScheduleMsg(msg)
+		cmds = append(cmds, cmd)
 	}
 
 	s.list, cmd = s.list.Update(msg)
@@ -111,6 +66,63 @@ func (s schedulePanel) Update(msg tea.Msg) (schedulePanel, tea.Cmd) {
 	}
 
 	return s, tea.Batch(cmds...)
+}
+
+func (s *schedulePanel) onCategorySelectionMsg(msg categorySelectionMsg) tea.Cmd {
+	s.category = category(msg)
+	s.list.SetItems([]list.Item{})
+
+	var cmds []tea.Cmd
+
+	cmd := func() tea.Msg {
+		return newScheduleLoadingMsg(s.category)
+	}
+	cmds = append(cmds, cmd)
+
+	cmd = func() tea.Msg {
+		schedule, err := fetchSchedule(s.category.ID)
+		if err != nil {
+			return newScheduleFailedMsg(s.category, err)
+		}
+		return newScheduleLoadedMsg(s.category, schedule)
+	}
+	cmds = append(cmds, cmd)
+
+	cmds = append(cmds, s.spinner.Tick)
+
+	cmd = func() tea.Msg {
+		return matchSelectionMsg("")
+	}
+	cmds = append(cmds, cmd)
+
+	return tea.Batch(cmds...)
+}
+
+func (s *schedulePanel) onScheduleMsg(msg scheduleMsg) tea.Cmd {
+	if !s.category.equal(msg.category) {
+		return nil
+	}
+
+	s.msg = msg
+	if msg.isSuccess() {
+		var items []list.Item
+		for _, m := range msg.matches {
+			items = append(items, m)
+		}
+		s.list.SetItems(items)
+	}
+
+	if msg.isSuccess() || msg.isFailed() {
+		return tea.Tick(cfg.scheduleRefreshInterval, func(time.Time) tea.Msg {
+			schedule, err := fetchSchedule(msg.category.ID)
+			if err != nil {
+				return newScheduleFailedMsg(s.category, err)
+			}
+			return newScheduleLoadedMsg(s.category, schedule)
+		})
+	}
+
+	return nil
 }
 
 func (s schedulePanel) View(focused bool) string {
