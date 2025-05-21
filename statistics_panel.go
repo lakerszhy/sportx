@@ -255,11 +255,11 @@ func (s *statisticsPanel) teamView(statistics []teamStatistics, team *team) stri
 			rightStyle = rightStyle.Foreground(focusedColor)
 		}
 		row := fmt.Sprintf("%s%s%s%s%s",
-			lipgloss.NewStyle().Width(leftRightWidth).Align(lipgloss.Left).Render(v.LeftVal),
+			leftStyle.Width(leftRightWidth).Align(lipgloss.Left).Render(v.LeftVal),
 			leftStyle.Render(strings.Repeat("━", leftWidth)),
 			lipgloss.NewStyle().Width(textWidth).AlignHorizontal(lipgloss.Center).Render(v.Text),
 			rightStyle.Render(strings.Repeat("━", rightWidth)),
-			lipgloss.NewStyle().Width(leftRightWidth).Align(lipgloss.Right).Render(v.RightVal),
+			rightStyle.Width(leftRightWidth).Align(lipgloss.Right).Render(v.RightVal),
 		)
 		rows = append(rows, row)
 	}
