@@ -196,6 +196,7 @@ func (s *statisticsPanel) teamView(statistics []teamStatistics, team *team) stri
 		return ""
 	}
 
+	width := s.viewport.Width - 6
 	leftRightWidth := 0
 	textWidth := 0
 
@@ -220,11 +221,11 @@ func (s *statisticsPanel) teamView(statistics []teamStatistics, team *team) stri
 		team.RightName,
 	)
 	teamRow = lipgloss.NewStyle().
-		Width(s.viewport.Width).
+		Width(width).
 		AlignHorizontal(lipgloss.Center).
 		Render(teamRow)
 
-	progressBarWidth := (s.viewport.Width - leftRightWidth*2 - textWidth) / 2
+	progressBarWidth := (width - leftRightWidth*2 - textWidth) / 2
 	rows := []string{teamRow}
 	for _, v := range statistics {
 		leftVal := strings.TrimSuffix(v.LeftVal, "%")
@@ -254,7 +255,7 @@ func (s *statisticsPanel) teamView(statistics []teamStatistics, team *team) stri
 		} else if rightPencent > leftPercent {
 			rightStyle = rightStyle.Foreground(focusedColor)
 		}
-		row := fmt.Sprintf("%s%s%s%s%s",
+		row := fmt.Sprintf(" %s %s %s %s %s ",
 			leftStyle.Width(leftRightWidth).Align(lipgloss.Left).Render(v.LeftVal),
 			leftStyle.Render(strings.Repeat("━", leftWidth)),
 			lipgloss.NewStyle().Width(textWidth).AlignHorizontal(lipgloss.Center).Render(v.Text),
