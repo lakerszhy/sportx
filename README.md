@@ -2,4 +2,6 @@
 
 终端体育赛事文字直播。
 
-![SportX](/asset/sportx.png)  
+[![Release](https://img.shields.io/github/release/lakerszhy/sportx.svg)](https://github.com/lakerszhy/sportx/releases/latest)
+
+![SportX](/asset/sportx.png) 
