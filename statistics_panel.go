@@ -279,6 +279,10 @@ func (s statisticsPanel) playerView(statistics [][]playerStatistics, team *team)
 		columns := []table.Column{}
 		rows := []table.Row{}
 		for _, vv := range v {
+			if len(vv.Head) == 0 {
+				return ""
+			}
+
 			for k, h := range vv.Head {
 				columns = append(columns, table.Column{Title: h, Width: columnWidthes[k]})
 			}
