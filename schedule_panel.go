@@ -82,7 +82,7 @@ func (s schedulePanel) Update(msg tea.Msg) (schedulePanel, tea.Cmd) {
 		}
 
 		if msg.isSuccess() || msg.isFailed() {
-			cmd = tea.Tick(10*time.Second, func(t time.Time) tea.Msg {
+			cmd = tea.Tick(cfg.scheduleRefreshInterval, func(t time.Time) tea.Msg {
 				schedule, err := fetchSchedule(msg.category.ID)
 				if err != nil {
 					return newScheduleFailedMsg(s.category, err)

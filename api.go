@@ -117,8 +117,8 @@ func fetchTextLives(matchID string) ([]textLive, error) {
 		return nil, nil
 	}
 
-	if len(indexs) > 40 {
-		indexs = indexs[:40]
+	if len(indexs) > cfg.textLiveCount {
+		indexs = indexs[:cfg.textLiveCount]
 	}
 
 	ret, err := fetchIndexTexts(matchID, indexs)
