@@ -7,6 +7,7 @@ var cfg = config{
 	scheduleRefreshInterval:   10 * time.Second,
 	statisticsRefreshInterval: 10 * time.Second,
 	textLiveRefreshInterval:   5 * time.Second,
+	apiRequestTimeout:         10 * time.Second,
 }
 
 type config struct {
@@ -14,4 +15,5 @@ type config struct {
 	scheduleRefreshInterval   time.Duration // 赛程刷新间隔
 	statisticsRefreshInterval time.Duration // 统计刷新间隔
 	textLiveRefreshInterval   time.Duration // 文本直播刷新间隔
+	apiRequestTimeout         time.Duration // API请求超时时间
 }

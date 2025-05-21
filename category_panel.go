@@ -91,7 +91,7 @@ func (d categoryDelegate) Spacing() int {
 	return 0
 }
 
-func (d categoryDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
+func (d categoryDelegate) Update(_ tea.Msg, _ *list.Model) tea.Cmd {
 	return nil
 }
 

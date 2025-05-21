@@ -70,15 +70,7 @@ func (a app) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		a.onWindowSizeMsg(msg)
 		return a, nil
 	case spinner.TickMsg:
-		a.categoryPanel, cmd = a.categoryPanel.Update(msg)
-		cmds = append(cmds, cmd)
-		a.schedulePanel, cmd = a.schedulePanel.Update(msg)
-		cmds = append(cmds, cmd)
-		a.textLivePanel, cmd = a.textLivePanel.Update(msg)
-		cmds = append(cmds, cmd)
-		a.statisticsPanel, cmd = a.statisticsPanel.Update(msg)
-		cmds = append(cmds, cmd)
-		return a, tea.Batch(cmds...)
+		return a.onSpinnerTickMsg(msg)
 	case tea.KeyMsg:
 		switch msg.String() {
 		case tea.KeyTab.String():
@@ -114,6 +106,22 @@ func (a app) View() string {
 		a.statisticsPanel.View(a.focus == focusStatistics),
 		a.textLivePanel.View(),
 	)
+}
+
+func (a app) onSpinnerTickMsg(msg spinner.TickMsg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+	var cmds []tea.Cmd
+
+	a.categoryPanel, cmd = a.categoryPanel.Update(msg)
+	cmds = append(cmds, cmd)
+	a.schedulePanel, cmd = a.schedulePanel.Update(msg)
+	cmds = append(cmds, cmd)
+	a.textLivePanel, cmd = a.textLivePanel.Update(msg)
+	cmds = append(cmds, cmd)
+	a.statisticsPanel, cmd = a.statisticsPanel.Update(msg)
+	cmds = append(cmds, cmd)
+
+	return a, tea.Batch(cmds...)
 }
 
 func (a *app) onWindowSizeMsg(msg tea.WindowSizeMsg) {

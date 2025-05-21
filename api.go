@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -237,7 +238,7 @@ func fetchIndexTexts(matchID string, indexes []string) (map[string]textLive, err
 	}
 
 	var ret map[string]textLive
-	if err := json.Unmarshal(resp[1], &ret); err != nil {
+	if err = json.Unmarshal(resp[1], &ret); err != nil {
 		return nil, err
 	}
 
@@ -284,7 +285,7 @@ func fetchStatistics(matchID string) (*statistics, error) {
 			// 14：篮球 102：足球
 			t = v.TeamStats
 		} else if v.Type == "15" {
-			err := json.Unmarshal(v.PlayerStats, &p)
+			err = json.Unmarshal(v.PlayerStats, &p)
 			if err != nil {
 				return nil, err
 			}
@@ -321,7 +322,13 @@ func splitPlayerStatistics(s []playerStatistics) [][]playerStatistics {
 }
 
 func request(u string, p map[string]string, ret any) error {
-	req, err := http.NewRequest(http.MethodGet, u, nil)
+	ctx, cancel := context.WithTimeout(
+		context.Background(),
+		cfg.apiRequestTimeout,
+	)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
 	if err != nil {
 		return err
 	}
@@ -331,7 +338,10 @@ func request(u string, p map[string]string, ret any) error {
 		q.Add(k, v)
 	}
 
-	req.Header.Add("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36")
+	req.Header.Add(
+		"User-Agent",
+		"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36",
+	)
 	req.URL.RawQuery = q.Encode()
 
 	hresp, err := http.DefaultClient.Do(req)

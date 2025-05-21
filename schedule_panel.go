@@ -82,7 +82,7 @@ func (s schedulePanel) Update(msg tea.Msg) (schedulePanel, tea.Cmd) {
 		}
 
 		if msg.isSuccess() || msg.isFailed() {
-			cmd = tea.Tick(cfg.scheduleRefreshInterval, func(t time.Time) tea.Msg {
+			cmd = tea.Tick(cfg.scheduleRefreshInterval, func(time.Time) tea.Msg {
 				schedule, err := fetchSchedule(msg.category.ID)
 				if err != nil {
 					return newScheduleFailedMsg(s.category, err)
@@ -128,7 +128,7 @@ func (d matchDelegate) Spacing() int {
 	return 0
 }
 
-func (d matchDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
+func (d matchDelegate) Update(_ tea.Msg, _ *list.Model) tea.Cmd {
 	return nil
 }
 

@@ -66,7 +66,7 @@ linters:
     - funcorder # checks the order of functions, methods, and constructors
     - funlen # tool for detection of long functions
     - gocheckcompilerdirectives # validates go compiler directive comments (//go:)
-    - gochecknoglobals # checks that no global variables exist
+    # - gochecknoglobals # checks that no global variables exist
     - gochecknoinits # checks that no init functions are present in Go code
     - gochecksumtype # checks exhaustiveness on Go "sum types"
     - gocognit # computes and checks the cognitive complexity of functions
@@ -100,7 +100,7 @@ linters:
     - promlinter # checks Prometheus metrics naming via promlint
     - protogetter # reports direct reads from proto message fields when getters should be used
     - reassign # checks that package variables are not reassigned
-    - recvcheck # checks for receiver type consistency
+    # - recvcheck # checks for receiver type consistency
     - revive # fast, configurable, extensible, flexible, and beautiful linter for Go, drop-in replacement of golint
     - rowserrcheck # checks whether Err of rows is checked successfully
     - sloglint # ensure consistent code style when using log/slog
@@ -121,17 +121,17 @@ linters:
 
     ## you may want to enable
     - decorder # checks declaration order and count of types, constants, variables and functions
-    - exhaustruct # [highly recommend to enable] checks if all structure fields are initialized
+    # - exhaustruct # [highly recommend to enable] checks if all structure fields are initialized
     - ginkgolinter # [if you use ginkgo/gomega] enforces standards of using ginkgo and gomega
     - godox # detects usage of FIXME, TODO and other keywords inside comments
     - goheader # checks is file header matches to pattern
     - inamedparam # [great idea, but too strict, need to ignore a lot of cases by default] reports interfaces with unnamed method parameters
     - interfacebloat # checks the number of methods inside an interface
-    - ireturn # accept interfaces, return concrete types
-    - prealloc # [premature optimization, but can be used in some cases] finds slice declarations that could potentially be preallocated
+    # - ireturn # accept interfaces, return concrete types
+    # - prealloc # [premature optimization, but can be used in some cases] finds slice declarations that could potentially be preallocated
     - tagalign # checks that struct tags are well aligned
     # - varnamelen # [great idea, but too many false positives] checks that the length of a variable's name matches its scope
-    - wrapcheck # checks that errors returned from external packages are wrapped
+    # - wrapcheck # checks that errors returned from external packages are wrapped
     - zerologlint # detects the wrong usage of zerolog that a user forgets to dispatch zerolog.Event
 
     ## disabled

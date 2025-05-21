@@ -104,7 +104,7 @@ func (s statisticsPanel) onStatisticsMsg(msg statisticsMsg) (statisticsPanel, te
 	s.viewport.SetContent(content)
 
 	if s.shouldRefresh(msg) {
-		cmd := tea.Tick(cfg.statisticsRefreshInterval, func(t time.Time) tea.Msg {
+		cmd := tea.Tick(cfg.statisticsRefreshInterval, func(time.Time) tea.Msg {
 			staticstics, err := fetchStatistics(msg.matchID)
 			if err != nil {
 				return newStatisticsFailedMsg(msg.matchID, err)
@@ -171,7 +171,7 @@ func (s statisticsPanel) goalView(goal *goalStatistics, team *team) string {
 		{team.LeftName},
 		{team.RightName},
 	}
-	for i := range len(rows) {
+	for i := range rows {
 		rows[i] = append(rows[i], goal.Rows[i]...)
 	}
 
