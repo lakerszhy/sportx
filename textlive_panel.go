@@ -148,7 +148,9 @@ func (t textLivePanel) View() string {
 			content = fmt.Sprintf("%s %s", v.Time, v.Content)
 		}
 		if v.Plus != "" {
-			content = fmt.Sprintf("%s %s(%s-%s)", content, v.Plus, v.LeftGoal, v.RightGoal)
+			plus := fmt.Sprintf("%s(%s-%s)", v.Plus, v.LeftGoal, v.RightGoal)
+			plus = listFocusedStyle.Render(plus)
+			content = fmt.Sprintf("%s %s", content, plus)
 		}
 		if strings.TrimSpace(content) != "" {
 			b.WriteString(content + "\n")
