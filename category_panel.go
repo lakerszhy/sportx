@@ -108,5 +108,5 @@ func (d categoryDelegate) Render(w io.Writer, m list.Model, index int, item list
 	}
 
 	content = ansi.Truncate(content, m.Width(), "...")
-	fmt.Fprintf(w, "%s", content) //nolint: errcheck
+	fmt.Fprintf(w, "%s", content)
 }

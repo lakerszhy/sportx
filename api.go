@@ -138,12 +138,9 @@ func fetchTextLives(matchID string) ([]textLive, error) {
 		if len(indexA) != 2 || len(indexB) != 2 {
 			return 0
 		}
-		retA, err := strconv.Atoi(indexA[0])
-		if err != nil {
-			return 0
-		}
-		retB, err := strconv.Atoi(indexB[0])
-		if err != nil {
+		retA, errA := strconv.Atoi(indexA[0])
+		retB, errB := strconv.Atoi(indexB[0])
+		if errA != nil || errB != nil {
 			return 0
 		}
 		return retA - retB
@@ -348,7 +345,8 @@ func request(u string, p map[string]string, ret any) error {
 	if err != nil {
 		return err
 	}
-	defer hresp.Body.Close() //nolint: errcheck
+
+	defer hresp.Body.Close()
 
 	if hresp.StatusCode != http.StatusOK {
 		return fmt.Errorf("request %s failed: %d", u, hresp.StatusCode)

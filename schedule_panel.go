@@ -188,5 +188,5 @@ func (d matchDelegate) Render(w io.Writer, m list.Model, index int, listItem lis
 
 	content := fmt.Sprintf("%s\n%s\n%s", title, desc, matchPeriod)
 	content = style.Width(m.Width()).Render(content)
-	fmt.Fprint(w, content+"\n"+divider(m.Width())) //nolint: errcheck
+	fmt.Fprint(w, content+"\n"+divider(m.Width()))
 }
