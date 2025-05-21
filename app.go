@@ -67,12 +67,8 @@ func (a app) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		a.statisticsPanel, cmd = a.statisticsPanel.Update(msg)
 		return a, cmd
 	case tea.WindowSizeMsg:
-		a.availableHeight = msg.Height - borderStyle.GetVerticalBorderSize()
-		availableWidth := msg.Width - 4*borderStyle.GetHorizontalBorderSize() - categoryPanelWidth - schedulePanelWidth - textLivePanelWidth
-		a.categoryPanel.setSize(categoryPanelWidth, a.availableHeight)
-		a.schedulePanel.setSize(schedulePanelWidth, a.availableHeight)
-		a.textLivePanel.SetHeight(a.availableHeight)
-		a.statisticsPanel.SetSize(availableWidth, a.availableHeight)
+		a.onWindowSizeMsg(msg)
+		return a, nil
 	case spinner.TickMsg:
 		a.categoryPanel, cmd = a.categoryPanel.Update(msg)
 		cmds = append(cmds, cmd)
@@ -118,6 +114,16 @@ func (a app) View() string {
 		a.statisticsPanel.View(a.focus == focusStatistics),
 		a.textLivePanel.View(),
 	)
+}
+
+func (a *app) onWindowSizeMsg(msg tea.WindowSizeMsg) {
+	statisticsWidth := msg.Width - 4*borderStyle.GetHorizontalBorderSize() - categoryPanelWidth - schedulePanelWidth - textLivePanelWidth
+	a.availableHeight = msg.Height - borderStyle.GetVerticalBorderSize()
+
+	a.categoryPanel.setSize(categoryPanelWidth, a.availableHeight)
+	a.schedulePanel.setSize(schedulePanelWidth, a.availableHeight)
+	a.textLivePanel.SetHeight(a.availableHeight)
+	a.statisticsPanel.SetSize(statisticsWidth, a.availableHeight)
 }
 
 type focus int

@@ -197,6 +197,10 @@ func (s *statisticsPanel) teamView(statistics []teamStatistics, team *team) stri
 	}
 
 	width := s.viewport.Width - 6
+	if width <= 0 {
+		return ""
+	}
+
 	leftRightWidth := 0
 	textWidth := 0
 
@@ -226,6 +230,10 @@ func (s *statisticsPanel) teamView(statistics []teamStatistics, team *team) stri
 		Render(teamRow)
 
 	progressBarWidth := (width - leftRightWidth*2 - textWidth) / 2
+	if progressBarWidth <= 0 {
+		return ""
+	}
+
 	rows := []string{teamRow}
 	for _, v := range statistics {
 		leftVal := strings.TrimSuffix(v.LeftVal, "%")
