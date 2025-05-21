@@ -34,7 +34,6 @@ func (t textLivePanel) Init() tea.Cmd {
 
 func (t textLivePanel) Update(msg tea.Msg) (textLivePanel, tea.Cmd) {
 	var cmd tea.Cmd
-	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
 	case spinner.TickMsg:
@@ -44,58 +43,68 @@ func (t textLivePanel) Update(msg tea.Msg) (textLivePanel, tea.Cmd) {
 		}
 		return t, nil
 	case matchSelectionMsg:
-		t.matchID = string(msg)
-		if t.matchID == "" {
-			cmd = func() tea.Msg {
-				return newTextLivesInitialMsg()
-			}
-			return t, cmd
-		}
-
-		cmd = func() tea.Msg {
-			return newTextLivesLoadingMsg(t.matchID)
-		}
-		cmds = append(cmds, cmd)
-
-		cmd = func() tea.Msg {
-			hasData, err := fetchMatchHasTextLives(t.matchID)
-			if err != nil {
-				return newTextLivesFailedMsg(t.matchID, err)
-			}
-			if !hasData {
-				return newTextLivesNoDataMsg(t.matchID)
-			}
-			textLives, err := fetchTextLives(t.matchID)
-			if err != nil {
-				return newTextLivesFailedMsg(t.matchID, err)
-			}
-			return newTextLivesLoadedMsg(t.matchID, textLives)
-		}
-		cmds = append(cmds, cmd)
-
-		cmds = append(cmds, t.spinner.Tick)
-
-		return t, tea.Batch(cmds...)
+		cmd = t.onMatchSelectionMsg(msg)
+		return t, cmd
 	case textLivesMsg:
-		if t.matchID != msg.matchID {
-			return t, nil
-		}
-
-		t.msg = msg
-
-		if t.msg.hasData && (msg.isSuccess() || msg.isFailed()) {
-			cmd = tea.Tick(cfg.textLiveRefreshInterval, func(time.Time) tea.Msg {
-				textLives, err := fetchTextLives(msg.matchID)
-				if err != nil {
-					return newTextLivesFailedMsg(msg.matchID, err)
-				}
-				return newTextLivesLoadedMsg(msg.matchID, textLives)
-			})
-		}
+		cmd = t.onTextLivesMsg(msg)
 		return t, cmd
 	}
 
 	return t, nil
+}
+
+func (t *textLivePanel) onMatchSelectionMsg(msg matchSelectionMsg) tea.Cmd {
+	t.matchID = string(msg)
+	if t.matchID == "" {
+		return func() tea.Msg {
+			return newTextLivesInitialMsg()
+		}
+	}
+
+	cmd := func() tea.Msg {
+		return newTextLivesLoadingMsg(t.matchID)
+	}
+	cmds := []tea.Cmd{cmd}
+
+	cmd = func() tea.Msg {
+		hasData, err := fetchMatchHasTextLives(t.matchID)
+		if err != nil {
+			return newTextLivesFailedMsg(t.matchID, err)
+		}
+		if !hasData {
+			return newTextLivesNoDataMsg(t.matchID)
+		}
+		textLives, err := fetchTextLives(t.matchID)
+		if err != nil {
+			return newTextLivesFailedMsg(t.matchID, err)
+		}
+		return newTextLivesLoadedMsg(t.matchID, textLives)
+	}
+	cmds = append(cmds, cmd)
+
+	cmds = append(cmds, t.spinner.Tick)
+
+	return tea.Batch(cmds...)
+}
+
+func (t *textLivePanel) onTextLivesMsg(msg textLivesMsg) tea.Cmd {
+	if t.matchID != msg.matchID {
+		return nil
+	}
+
+	t.msg = msg
+
+	if t.msg.hasData && (msg.isSuccess() || msg.isFailed()) {
+		return tea.Tick(cfg.textLiveRefreshInterval, func(time.Time) tea.Msg {
+			textLives, err := fetchTextLives(msg.matchID)
+			if err != nil {
+				return newTextLivesFailedMsg(msg.matchID, err)
+			}
+			return newTextLivesLoadedMsg(msg.matchID, textLives)
+		})
+	}
+
+	return nil
 }
 
 func (t textLivePanel) View() string {
