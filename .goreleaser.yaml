@@ -1,0 +1,22 @@
+version: 2
+
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+
+archives:
+  - formats: [tar.gz]
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    name_template: "{{ .ProjectName }}-{{ .Os }}-{{ .Tag }}-{{ .Arch }}"
+    files:
+      - none*
+    wrap_in_directory: true
