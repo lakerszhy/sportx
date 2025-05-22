@@ -133,7 +133,7 @@ type matchDelegate struct {
 }
 
 func (d matchDelegate) Height() int {
-	return 4
+	return 4 //nolint:mnd // 每场比赛显示4行
 }
 
 func (d matchDelegate) Spacing() int {

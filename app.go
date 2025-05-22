@@ -136,12 +136,14 @@ func (a *app) onWindowSizeMsg(msg tea.WindowSizeMsg) {
 
 type focus int
 
+const panelCount = 3
+
 func (f focus) next() focus {
-	return (f + 1) % 3
+	return (f + 1) % panelCount
 }
 
 func (f focus) prev() focus {
-	return (f - 1 + 3) % 3
+	return (f - 1 + panelCount) % panelCount
 }
 
 const (

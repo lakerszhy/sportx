@@ -52,10 +52,11 @@ func fetchSchedule(categoyID string) ([]match, error) {
 	}
 
 	start := time.Now()
+	end := start.AddDate(0, 0, 5) //nolint:mnd // 获取5天的赛程
 	p := map[string]string{
 		"columnId":  categoyID,
 		"startTime": start.Format("2006-01-02"),
-		"endTime":   start.AddDate(0, 0, 5).Format("2006-01-02"),
+		"endTime":   end.Format("2006-01-02"),
 	}
 	err := request(
 		"https://matchweb.sports.qq.com/matchUnion/list",
@@ -210,7 +211,7 @@ func fetchTextLiveIndexes(matchID string) ([]string, error) {
 
 func fetchIndexTexts(matchID string, indexes []string) (map[string]textLive, error) {
 	ids := strings.Split(matchID, ":")
-	if len(ids) != 2 {
+	if len(ids) != 2 { //nolint:mnd // 分割competitionId和matchId
 		return nil, fmt.Errorf("invalid match id: %s", matchID)
 	}
 
@@ -230,7 +231,7 @@ func fetchIndexTexts(matchID string, indexes []string) (map[string]textLive, err
 		return nil, err
 	}
 
-	if len(resp) != 3 {
+	if len(resp) != 3 { //nolint:mnd // 返回值是三个元素的slice
 		return nil, fmt.Errorf("fetch text live failed, resp: %v", resp)
 	}
 

@@ -23,7 +23,7 @@ type statisticsPanel struct {
 
 func newStatisticsPanel() statisticsPanel {
 	vp := viewport.New(0, 0)
-	vp.SetHorizontalStep(3)
+	vp.SetHorizontalStep(3) //nolint:mnd // 水平移动距离
 	return statisticsPanel{
 		viewport: vp,
 		msg:      newStatisticsInitialMsg(),
@@ -164,7 +164,7 @@ func (s statisticsPanel) goalView(goal *goalStatistics, team *team) string {
 		{Title: "", Width: team.width()},
 	}
 	for _, v := range goal.Head {
-		columns = append(columns, table.Column{Title: v, Width: 6})
+		columns = append(columns, table.Column{Title: v, Width: 6}) //nolint:mnd // cell宽度
 	}
 
 	rows := []table.Row{
@@ -196,7 +196,7 @@ func (s *statisticsPanel) teamView(statistics []teamStatistics, team *team) stri
 		return ""
 	}
 
-	width := s.viewport.Width - 6
+	width := s.viewport.Width - 6 //nolint:mnd // 列之间的pandding
 	if width <= 0 {
 		return ""
 	}
@@ -229,7 +229,7 @@ func (s *statisticsPanel) teamView(statistics []teamStatistics, team *team) stri
 		AlignHorizontal(lipgloss.Center).
 		Render(teamRow)
 
-	progressBarWidth := (width - leftRightWidth*2 - textWidth) / 2
+	progressBarWidth := (width - leftRightWidth*2 - textWidth) / 2 //nolint:mnd // 进度条宽度
 	if progressBarWidth <= 0 {
 		return ""
 	}
@@ -311,7 +311,7 @@ func (s statisticsPanel) playerView(statistics [][]playerStatistics, team *team)
 		tables = append(tables, t)
 	}
 
-	if len(tables) >= 2 {
+	if len(tables) >= 2 { //nolint:mnd // 每只球队一个table
 		tables[0].Columns()[0].Title = team.LeftName
 		tables[1].Columns()[0].Title = team.RightName
 	}
@@ -343,9 +343,10 @@ func (s statisticsPanel) columnWidthes(statistics [][]playerStatistics) []int {
 		}
 	}
 
+	maxWidth := 14
 	for k, v := range columnWidth {
-		if v > 14 {
-			columnWidth[k] = 14
+		if v > maxWidth {
+			columnWidth[k] = maxWidth
 		}
 	}
 
