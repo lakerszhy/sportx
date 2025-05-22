@@ -150,14 +150,17 @@ func (d matchDelegate) Render(w io.Writer, m list.Model, index int, listItem lis
 		return
 	}
 
+	width := m.Width() - 2 //nolint:mnd // 左右padding
+
 	timeOnly := ""
 	startTime, err := time.Parse("2006-01-02 15:04:05", i.StartTime)
 	if err == nil {
 		timeOnly = startTime.Format("01-02 15:04")
 	}
 	title := fmt.Sprintf("%s %s", timeOnly, i.MatchDesc)
-	title = ansi.Truncate(title, m.Width(), "...")
-	title = lipgloss.NewStyle().Width(m.Width()).
+	title = ansi.Truncate(title, width, "...")
+	title = lipgloss.NewStyle().Width(width).
+		Margin(0, 1).
 		Align(lipgloss.Center).
 		Render(title)
 
@@ -176,12 +179,10 @@ func (d matchDelegate) Render(w io.Writer, m list.Model, index int, listItem lis
 
 	desc := ""
 	if i.RightName == "" {
-		desc = ansi.Truncate(i.LeftName, m.Width()-2, "...")
-		desc = lipgloss.NewStyle().Width(m.Width() - 2).
-			Align(lipgloss.Center).Render(desc)
+		desc = ansi.Truncate(i.LeftName, width, "...")
 	} else {
 		score := fmt.Sprintf("%s - %s", i.LeftGoal, i.RightGoal)
-		nameWith := (m.Width() - 2 - ansi.StringWidth(score)) / 2
+		nameWith := (width - 2 - ansi.StringWidth(score)) / 2 //nolint:mnd // 两只队伍各占一半
 
 		leftName := ansi.Truncate(i.LeftName, nameWith, "...")
 		rightName := ansi.Truncate(i.RightName, nameWith, "...")
@@ -192,6 +193,8 @@ func (d matchDelegate) Render(w io.Writer, m list.Model, index int, listItem lis
 			lipgloss.NewStyle().Width(nameWith).Align(lipgloss.Center).Render(rightName),
 		)
 	}
+	desc = lipgloss.NewStyle().Width(width).Margin(0, 1).
+		Align(lipgloss.Center).Render(desc)
 
 	style := lipgloss.NewStyle()
 	if index == m.Index() {

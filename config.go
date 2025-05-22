@@ -2,6 +2,7 @@ package main
 
 import "time"
 
+//nolint:mnd // 配置文件
 var cfg = config{
 	textLiveCount:             40,
 	scheduleRefreshInterval:   10 * time.Second,
