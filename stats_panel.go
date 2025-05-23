@@ -14,30 +14,30 @@ import (
 	"github.com/charmbracelet/x/ansi"
 )
 
-type statisticsPanel struct {
+type statsPanel struct {
 	spinner  spinner.Model
 	matchID  string
 	viewport viewport.Model
-	msg      statisticsMsg
+	msg      statsMsg
 }
 
-func newStatisticsPanel() statisticsPanel {
+func newStatsPanel() statsPanel {
 	vp := viewport.New(0, 0)
 	vp.SetHorizontalStep(3) //nolint:mnd // 水平移动距离
-	return statisticsPanel{
+	return statsPanel{
 		viewport: vp,
-		msg:      newStatisticsInitialMsg(),
+		msg:      newStatsInitialMsg(),
 		spinner: spinner.New(
 			spinner.WithSpinner(spinner.Dot),
 		),
 	}
 }
 
-func (s statisticsPanel) Init() tea.Cmd {
+func (s statsPanel) Init() tea.Cmd {
 	return nil
 }
 
-func (s statisticsPanel) Update(msg tea.Msg) (statisticsPanel, tea.Cmd) {
+func (s statsPanel) Update(msg tea.Msg) (statsPanel, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
 
@@ -53,30 +53,30 @@ func (s statisticsPanel) Update(msg tea.Msg) (statisticsPanel, tea.Cmd) {
 
 		if s.matchID == "" {
 			cmd = func() tea.Msg {
-				return newStatisticsInitialMsg()
+				return newStatsInitialMsg()
 			}
 			return s, cmd
 		}
 
 		cmd = func() tea.Msg {
-			return newStatisticsLoadingMsg(s.matchID)
+			return newStatsLoadingMsg(s.matchID)
 		}
 		cmds = append(cmds, cmd)
 
 		cmd = func() tea.Msg {
-			statistics, err := fetchStatistics(s.matchID)
+			stats, err := fetchStats(s.matchID)
 			if err != nil {
-				return newStatisticsFailedMsg(s.matchID, err)
+				return newStatsFailedMsg(s.matchID, err)
 			}
-			return newStatisticsLoadedMsg(s.matchID, statistics)
+			return newStatsLoadedMsg(s.matchID, stats)
 		}
 		cmds = append(cmds, cmd)
 
 		cmds = append(cmds, s.spinner.Tick)
 
 		return s, tea.Batch(cmds...)
-	case statisticsMsg:
-		s, cmd = s.onStatisticsMsg(msg)
+	case statsMsg:
+		s, cmd = s.onStatsMsg(msg)
 		return s, cmd
 	}
 
@@ -84,30 +84,30 @@ func (s statisticsPanel) Update(msg tea.Msg) (statisticsPanel, tea.Cmd) {
 	return s, cmd
 }
 
-func (s statisticsPanel) onStatisticsMsg(msg statisticsMsg) (statisticsPanel, tea.Cmd) {
+func (s statsPanel) onStatsMsg(msg statsMsg) (statsPanel, tea.Cmd) {
 	if s.matchID != msg.matchID {
 		return s, nil
 	}
 	s.msg = msg
 
 	if s.msg.isSuccess() {
-		team := s.msg.statistics.team
+		team := s.msg.stats.team
 		content := lipgloss.JoinVertical(
 			lipgloss.Left,
-			s.goalView(s.msg.statistics.goal, team),
-			s.teamView(s.msg.statistics.teamStatistics, team),
-			s.playerView(s.msg.statistics.playerStatistics, team),
+			s.goalView(s.msg.stats.goal, team),
+			s.teamView(s.msg.stats.teamStats, team),
+			s.playerView(s.msg.stats.playerStats, team),
 		)
 		s.viewport.SetContent(content)
 	}
 
 	if s.shouldRefresh(msg) {
-		cmd := tea.Tick(cfg.statisticsRefreshInterval, func(time.Time) tea.Msg {
-			staticstics, err := fetchStatistics(msg.matchID)
+		cmd := tea.Tick(cfg.statsRefreshInterval, func(time.Time) tea.Msg {
+			staticstics, err := fetchStats(msg.matchID)
 			if err != nil {
-				return newStatisticsFailedMsg(msg.matchID, err)
+				return newStatsFailedMsg(msg.matchID, err)
 			}
-			return newStatisticsLoadedMsg(msg.matchID, staticstics)
+			return newStatsLoadedMsg(msg.matchID, staticstics)
 		})
 		return s, cmd
 	}
@@ -115,19 +115,19 @@ func (s statisticsPanel) onStatisticsMsg(msg statisticsMsg) (statisticsPanel, te
 	return s, nil
 }
 
-func (s statisticsPanel) shouldRefresh(msg statisticsMsg) bool {
+func (s statsPanel) shouldRefresh(msg statsMsg) bool {
 	if msg.isFailed() {
 		return true
 	}
 
-	if msg.isSuccess() && msg.statistics.livePeriod != periodEnd {
+	if msg.isSuccess() && msg.stats.livePeriod != periodEnd {
 		return true
 	}
 
 	return false
 }
 
-func (s statisticsPanel) View(focused bool) string {
+func (s statsPanel) View(focused bool) string {
 	style := borderStyle
 	if focused {
 		style = borderFocusedStyle
@@ -146,14 +146,14 @@ func (s statisticsPanel) View(focused bool) string {
 		return style.Render("加载失败: " + s.msg.err.Error())
 	}
 
-	if s.msg.statistics == nil {
+	if s.msg.stats == nil {
 		return style.Render("没有数据")
 	}
 
 	return style.Render(s.viewport.View())
 }
 
-func (s statisticsPanel) goalView(goal *goalStatistics, team *team) string {
+func (s statsPanel) goalView(goal *goalStats, team *team) string {
 	if goal == nil || team == nil {
 		return ""
 	}
@@ -189,8 +189,8 @@ func (s statisticsPanel) goalView(goal *goalStatistics, team *team) string {
 		Render(t.View()) + "\n"
 }
 
-func (s *statisticsPanel) teamView(statistics []teamStatistics, team *team) string {
-	if len(statistics) == 0 || team == nil {
+func (s *statsPanel) teamView(stats []teamStats, team *team) string {
+	if len(stats) == 0 || team == nil {
 		return ""
 	}
 
@@ -202,7 +202,7 @@ func (s *statisticsPanel) teamView(statistics []teamStatistics, team *team) stri
 	leftRightWidth := 0
 	textWidth := 0
 
-	for _, v := range statistics {
+	for _, v := range stats {
 		t := ansi.StringWidth(v.Text)
 		if t > textWidth {
 			textWidth = t
@@ -233,7 +233,7 @@ func (s *statisticsPanel) teamView(statistics []teamStatistics, team *team) stri
 	}
 
 	rows := []string{teamRow}
-	for _, v := range statistics {
+	for _, v := range stats {
 		leftVal := strings.TrimSuffix(v.LeftVal, "%")
 		rightVal := strings.TrimSuffix(v.RightVal, "%")
 		leftPercent := 0.0
@@ -274,15 +274,15 @@ func (s *statisticsPanel) teamView(statistics []teamStatistics, team *team) stri
 	return strings.Join(rows, "\n") + "\n"
 }
 
-func (s statisticsPanel) playerView(statistics [][]playerStatistics, team *team) string {
-	if len(statistics) == 0 || team == nil {
+func (s statsPanel) playerView(stats [][]playerStats, team *team) string {
+	if len(stats) == 0 || team == nil {
 		return ""
 	}
 
 	var tables []table.Model
-	columnWidthes := s.columnWidthes(statistics)
+	columnWidthes := s.columnWidthes(stats)
 
-	for _, v := range statistics {
+	for _, v := range stats {
 		columns := []table.Column{}
 		rows := []table.Row{}
 		for _, vv := range v {
@@ -325,9 +325,9 @@ func (s statisticsPanel) playerView(statistics [][]playerStatistics, team *team)
 	)
 }
 
-func (s statisticsPanel) columnWidthes(statistics [][]playerStatistics) []int {
+func (s statsPanel) columnWidthes(stats [][]playerStats) []int {
 	var columnWidth []int
-	for _, v := range statistics {
+	for _, v := range stats {
 		for _, vv := range v {
 			for _, h := range vv.Head {
 				columnWidth = append(columnWidth, ansi.StringWidth(h))
@@ -351,7 +351,7 @@ func (s statisticsPanel) columnWidthes(statistics [][]playerStatistics) []int {
 	return columnWidth
 }
 
-func (s *statisticsPanel) SetSize(width, height int) {
+func (s *statsPanel) SetSize(width, height int) {
 	s.viewport.Width = width
 	s.viewport.Height = height
 }

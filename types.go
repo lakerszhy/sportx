@@ -77,12 +77,12 @@ func (t textLive) FilterValue() string {
 	return t.Content
 }
 
-type statistics struct {
-	team             *team
-	goal             *goalStatistics
-	teamStatistics   []teamStatistics
-	playerStatistics [][]playerStatistics
-	livePeriod       period
+type stats struct {
+	team        *team
+	goal        *goalStats
+	teamStats   []teamStats
+	playerStats [][]playerStats
+	livePeriod  period
 }
 
 type team struct {
@@ -99,18 +99,18 @@ func (t team) width() int {
 	return right
 }
 
-type goalStatistics struct {
+type goalStats struct {
 	Head []string   `json:"head"`
 	Rows [][]string `json:"rows"`
 }
 
-type teamStatistics struct {
+type teamStats struct {
 	LeftVal  string `json:"leftVal"`
 	RightVal string `json:"rightVal"`
 	Text     string `json:"text"`
 }
 
-type playerStatistics struct {
+type playerStats struct {
 	Head []string `json:"head"`
 	Row  []string `json:"row"`
 }

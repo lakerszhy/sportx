@@ -16,18 +16,18 @@ type app struct {
 	categoryPanel   categoryPanel
 	schedulePanel   schedulePanel
 	textLivePanel   textLivePanel
-	statisticsPanel statisticsPanel
+	statsPanel      statsPanel
 	focus           focus
 	availableHeight int
 }
 
 func newApp() app {
 	return app{
-		categoryPanel:   newCategoryPanel(),
-		schedulePanel:   newSchedulePanel(),
-		textLivePanel:   newTextLivePanel(textLivePanelWidth),
-		statisticsPanel: newStatisticsPanel(),
-		focus:           focusCategory,
+		categoryPanel: newCategoryPanel(),
+		schedulePanel: newSchedulePanel(),
+		textLivePanel: newTextLivePanel(textLivePanelWidth),
+		statsPanel:    newStatsPanel(),
+		focus:         focusCategory,
 	}
 }
 
@@ -57,14 +57,14 @@ func (a app) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case matchSelectionMsg:
 		a.textLivePanel, cmd = a.textLivePanel.Update(msg)
 		cmds = append(cmds, cmd)
-		a.statisticsPanel, cmd = a.statisticsPanel.Update(msg)
+		a.statsPanel, cmd = a.statsPanel.Update(msg)
 		cmds = append(cmds, cmd)
 		return a, tea.Batch(cmds...)
 	case textLivesMsg:
 		a.textLivePanel, cmd = a.textLivePanel.Update(msg)
 		return a, cmd
-	case statisticsMsg:
-		a.statisticsPanel, cmd = a.statisticsPanel.Update(msg)
+	case statsMsg:
+		a.statsPanel, cmd = a.statsPanel.Update(msg)
 		return a, cmd
 	case tea.WindowSizeMsg:
 		a.onWindowSizeMsg(msg)
@@ -91,8 +91,8 @@ func (a app) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case focusSchedule:
 		a.schedulePanel, cmd = a.schedulePanel.Update(msg)
 		return a, cmd
-	case focusStatistics:
-		a.statisticsPanel, cmd = a.statisticsPanel.Update(msg)
+	case focusStats:
+		a.statsPanel, cmd = a.statsPanel.Update(msg)
 		return a, cmd
 	}
 
@@ -103,7 +103,7 @@ func (a app) View() string {
 	return lipgloss.JoinHorizontal(lipgloss.Left,
 		a.categoryPanel.View(a.focus == focusCategory),
 		a.schedulePanel.View(a.focus == focusSchedule),
-		a.statisticsPanel.View(a.focus == focusStatistics),
+		a.statsPanel.View(a.focus == focusStats),
 		a.textLivePanel.View(),
 	)
 }
@@ -118,20 +118,20 @@ func (a app) onSpinnerTickMsg(msg spinner.TickMsg) (tea.Model, tea.Cmd) {
 	cmds = append(cmds, cmd)
 	a.textLivePanel, cmd = a.textLivePanel.Update(msg)
 	cmds = append(cmds, cmd)
-	a.statisticsPanel, cmd = a.statisticsPanel.Update(msg)
+	a.statsPanel, cmd = a.statsPanel.Update(msg)
 	cmds = append(cmds, cmd)
 
 	return a, tea.Batch(cmds...)
 }
 
 func (a *app) onWindowSizeMsg(msg tea.WindowSizeMsg) {
-	statisticsWidth := msg.Width - 4*borderStyle.GetHorizontalBorderSize() - categoryPanelWidth - schedulePanelWidth - textLivePanelWidth
+	statsWidth := msg.Width - 4*borderStyle.GetHorizontalBorderSize() - categoryPanelWidth - schedulePanelWidth - textLivePanelWidth
 	a.availableHeight = msg.Height - borderStyle.GetVerticalBorderSize()
 
 	a.categoryPanel.setSize(categoryPanelWidth, a.availableHeight)
 	a.schedulePanel.setSize(schedulePanelWidth, a.availableHeight)
 	a.textLivePanel.SetHeight(a.availableHeight)
-	a.statisticsPanel.SetSize(statisticsWidth, a.availableHeight)
+	a.statsPanel.SetSize(statsWidth, a.availableHeight)
 }
 
 type focus int
@@ -149,5 +149,5 @@ func (f focus) prev() focus {
 const (
 	focusCategory focus = iota
 	focusSchedule
-	focusStatistics
+	focusStats
 )

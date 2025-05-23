@@ -243,7 +243,7 @@ func fetchIndexTexts(matchID string, indexes []string) (map[string]textLive, err
 	return ret, nil
 }
 
-func fetchStatistics(matchID string) (*statistics, error) {
+func fetchStats(matchID string) (*stats, error) {
 	var resp struct {
 		Code int    `json:"code"`
 		Msg  string `json:"msg"`
@@ -251,10 +251,10 @@ func fetchStatistics(matchID string) (*statistics, error) {
 			TeamInfo   team   `json:"teamInfo"`
 			LivePeriod period `json:"livePeriod"`
 			Stats      []struct {
-				Type        string           `json:"type"`
-				Goals       []goalStatistics `json:"goals"`
-				TeamStats   []teamStatistics `json:"teamStats"`
-				PlayerStats json.RawMessage  `json:"playerStats"`
+				Type        string          `json:"type"`
+				Goals       []goalStats     `json:"goals"`
+				TeamStats   []teamStats     `json:"teamStats"`
+				PlayerStats json.RawMessage `json:"playerStats"`
 			} `json:"stats"`
 		} `json:"data"`
 	}
@@ -269,13 +269,13 @@ func fetchStatistics(matchID string) (*statistics, error) {
 	}
 
 	if resp.Code != 0 {
-		return nil, fmt.Errorf("fetch statistics failed, code: %d, msg: %s",
+		return nil, fmt.Errorf("fetch stats failed, code: %d, msg: %s",
 			resp.Code, resp.Msg)
 	}
 
-	var g *goalStatistics
-	var t []teamStatistics
-	var p []playerStatistics
+	var g *goalStats
+	var t []teamStats
+	var p []playerStats
 	for _, v := range resp.Data.Stats {
 		if v.Type == "12" && len(v.Goals) > 0 {
 			g = &v.Goals[0]
@@ -290,18 +290,18 @@ func fetchStatistics(matchID string) (*statistics, error) {
 		}
 	}
 
-	return &statistics{
-		team:             &resp.Data.TeamInfo,
-		goal:             g,
-		teamStatistics:   t,
-		livePeriod:       resp.Data.LivePeriod,
-		playerStatistics: splitPlayerStatistics(p),
+	return &stats{
+		team:        &resp.Data.TeamInfo,
+		goal:        g,
+		teamStats:   t,
+		livePeriod:  resp.Data.LivePeriod,
+		playerStats: splitPlayerStats(p),
 	}, nil
 }
 
-func splitPlayerStatistics(s []playerStatistics) [][]playerStatistics {
-	var teams [][]playerStatistics
-	var players []playerStatistics
+func splitPlayerStats(s []playerStats) [][]playerStats {
+	var teams [][]playerStats
+	var players []playerStats
 
 	for _, v := range s {
 		if len(v.Head) == 0 && len(v.Row) == 0 {
@@ -310,7 +310,7 @@ func splitPlayerStatistics(s []playerStatistics) [][]playerStatistics {
 
 		if len(v.Head) > 0 && len(players) > 0 {
 			teams = append(teams, players)
-			players = []playerStatistics{}
+			players = []playerStats{}
 		}
 		players = append(players, v)
 	}

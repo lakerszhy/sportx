@@ -138,36 +138,36 @@ func newTextLivesFailedMsg(matchID string, err error) textLivesMsg {
 	}
 }
 
-type statisticsMsg struct {
-	matchID    string
-	statistics *statistics
-	err        error
+type statsMsg struct {
+	matchID string
+	stats   *stats
+	err     error
 	status
 }
 
-func newStatisticsInitialMsg() statisticsMsg {
-	return statisticsMsg{
+func newStatsInitialMsg() statsMsg {
+	return statsMsg{
 		status: statusInitial,
 	}
 }
 
-func newStatisticsLoadingMsg(matchID string) statisticsMsg {
-	return statisticsMsg{
+func newStatsLoadingMsg(matchID string) statsMsg {
+	return statsMsg{
 		matchID: matchID,
 		status:  statusLoading,
 	}
 }
 
-func newStatisticsLoadedMsg(matchID string, s *statistics) statisticsMsg {
-	return statisticsMsg{
-		matchID:    matchID,
-		statistics: s,
-		status:     statusSuccess,
+func newStatsLoadedMsg(matchID string, s *stats) statsMsg {
+	return statsMsg{
+		matchID: matchID,
+		stats:   s,
+		status:  statusSuccess,
 	}
 }
 
-func newStatisticsFailedMsg(matchID string, err error) statisticsMsg {
-	return statisticsMsg{
+func newStatsFailedMsg(matchID string, err error) statsMsg {
+	return statsMsg{
 		matchID: matchID,
 		err:     err,
 		status:  statusFailed,
