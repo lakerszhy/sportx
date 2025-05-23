@@ -90,18 +90,16 @@ func (s statisticsPanel) onStatisticsMsg(msg statisticsMsg) (statisticsPanel, te
 	}
 	s.msg = msg
 
-	if !s.msg.isSuccess() {
-		return s, nil
+	if s.msg.isSuccess() {
+		team := s.msg.statistics.team
+		content := lipgloss.JoinVertical(
+			lipgloss.Left,
+			s.goalView(s.msg.statistics.goal, team),
+			s.teamView(s.msg.statistics.teamStatistics, team),
+			s.playerView(s.msg.statistics.playerStatistics, team),
+		)
+		s.viewport.SetContent(content)
 	}
-
-	team := s.msg.statistics.team
-	content := lipgloss.JoinVertical(
-		lipgloss.Left,
-		s.goalView(s.msg.statistics.goal, team),
-		s.teamView(s.msg.statistics.teamStatistics, team),
-		s.playerView(s.msg.statistics.playerStatistics, team),
-	)
-	s.viewport.SetContent(content)
 
 	if s.shouldRefresh(msg) {
 		cmd := tea.Tick(cfg.statisticsRefreshInterval, func(time.Time) tea.Msg {
