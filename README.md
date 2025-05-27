@@ -6,3 +6,15 @@
 终端体育赛事文字直播。
 
 ![SportX](/asset/sportx.png) 
+
+## 安装
+
+```bash
+go install github.com/lakerszhy/sportx@latest
+```
+
+## 启动
+
+```bash
+sptx
+```
