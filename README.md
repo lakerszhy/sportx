@@ -16,5 +16,5 @@ go install github.com/lakerszhy/sportx@latest
 ## 启动
 
 ```bash
-sptx
+sportx
 ```

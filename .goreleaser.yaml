@@ -1,8 +1,7 @@
 version: 2
 
 builds:
-  - binary: sptx
-    env:
+  - env:
       - CGO_ENABLED=0
     goos:
       - linux
