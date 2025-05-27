@@ -9,6 +9,12 @@
 
 ## 安装
 
+### 二进制文件安装
+
+[点击下载](https://github.com/lakerszhy/sportx/releases)。
+
+### 源码安装
+
 ```bash
 go install github.com/lakerszhy/sportx@latest
 ```
