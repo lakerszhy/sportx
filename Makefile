@@ -3,6 +3,6 @@ lint:
 	golangci-lint run -v
 
 release:
-	goreleaser release --skip=publish --clean
+	goreleaser release  --snapshot --clean
 
 .PHONY: lint release
