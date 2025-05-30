@@ -277,12 +277,14 @@ func fetchStats(matchID string) (*stats, error) {
 	var t []teamStats
 	var p []playerStats
 	for _, v := range resp.Data.Stats {
-		if v.Type == "12" && len(v.Goals) > 0 {
-			g = &v.Goals[0]
-		} else if v.Type == "14" || v.Type == "102" {
-			// 14：篮球 102：足球
+		switch v.Type {
+		case "12":
+			if len(v.Goals) > 0 {
+				g = &v.Goals[0]
+			}
+		case "14", "102": // 14：篮球 102：足球
 			t = v.TeamStats
-		} else if v.Type == "15" {
+		case "15":
 			err = json.Unmarshal(v.PlayerStats, &p)
 			if err != nil {
 				return nil, err
