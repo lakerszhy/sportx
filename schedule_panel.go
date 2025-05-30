@@ -177,10 +177,8 @@ func (d matchDelegate) Render(w io.Writer, m list.Model, index int, listItem lis
 		Align(lipgloss.Center).
 		Render(matchPeriod)
 
-	desc := ""
-	if i.RightName == "" {
-		desc = ansi.Truncate(i.LeftName, width, "...")
-	} else {
+	desc := ansi.Truncate(i.LeftName, width, "...")
+	if i.RightName != "" {
 		score := fmt.Sprintf("%s - %s", i.LeftGoal, i.RightGoal)
 		nameWith := (width - 2 - ansi.StringWidth(score)) / 2 //nolint:mnd // 两只队伍各占一半
 
