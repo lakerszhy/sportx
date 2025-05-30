@@ -194,43 +194,17 @@ func (s *statsPanel) teamView(stats []teamStats, team *team) string {
 		return ""
 	}
 
-	width := s.viewport.Width - 6 //nolint:mnd // 列之间的pandding
-	if width <= 0 {
-		return ""
-	}
-
-	leftRightWidth := 0
-	textWidth := 0
-
-	for _, v := range stats {
-		t := ansi.StringWidth(v.Text)
-		if t > textWidth {
-			textWidth = t
-		}
-		l := ansi.StringWidth(v.LeftVal)
-		if l > leftRightWidth {
-			leftRightWidth = l
-		}
-		r := ansi.StringWidth(v.RightVal)
-		if r > leftRightWidth {
-			leftRightWidth = r
-		}
-	}
+	totalWidth, valueWidth, itemWidth, progressBarWidth := s.calcWidths(stats)
 
 	teamRow := fmt.Sprintf("%s%s%s",
 		team.LeftName,
-		lipgloss.NewStyle().Width(textWidth).Align(lipgloss.Center).Render("vs"),
+		lipgloss.NewStyle().Width(itemWidth).Align(lipgloss.Center).Render("vs"),
 		team.RightName,
 	)
 	teamRow = lipgloss.NewStyle().
-		Width(width).
+		Width(totalWidth).
 		AlignHorizontal(lipgloss.Center).
 		Render(teamRow)
-
-	progressBarWidth := (width - leftRightWidth*2 - textWidth) / 2 //nolint:mnd // 进度条宽度
-	if progressBarWidth <= 0 {
-		return ""
-	}
 
 	rows := []string{teamRow}
 	for _, v := range stats {
@@ -262,16 +236,42 @@ func (s *statsPanel) teamView(stats []teamStats, team *team) string {
 			rightStyle = rightStyle.Foreground(focusedColor)
 		}
 		row := fmt.Sprintf(" %s %s %s %s %s ",
-			leftStyle.Width(leftRightWidth).Align(lipgloss.Left).Render(v.LeftVal),
+			leftStyle.Width(valueWidth).Align(lipgloss.Left).Render(v.LeftVal),
 			leftStyle.Render(strings.Repeat("━", leftWidth)),
-			lipgloss.NewStyle().Width(textWidth).AlignHorizontal(lipgloss.Center).Render(v.Text),
+			lipgloss.NewStyle().Width(itemWidth).AlignHorizontal(lipgloss.Center).Render(v.Text),
 			rightStyle.Render(strings.Repeat("━", rightWidth)),
-			rightStyle.Width(leftRightWidth).Align(lipgloss.Right).Render(v.RightVal),
+			rightStyle.Width(valueWidth).Align(lipgloss.Right).Render(v.RightVal),
 		)
 		rows = append(rows, row)
 	}
 
 	return strings.Join(rows, "\n") + "\n"
+}
+
+func (s statsPanel) calcWidths(stats []teamStats) (int, int, int, int) {
+	totalWidth := s.viewport.Width - 6 //nolint:mnd // 列之间的pandding
+
+	valueWidth := 0
+	itemWidth := 0
+
+	for _, v := range stats {
+		t := ansi.StringWidth(v.Text)
+		if t > itemWidth {
+			itemWidth = t
+		}
+		l := ansi.StringWidth(v.LeftVal)
+		if l > valueWidth {
+			valueWidth = l
+		}
+		r := ansi.StringWidth(v.RightVal)
+		if r > valueWidth {
+			valueWidth = r
+		}
+	}
+
+	progressBarWidth := (totalWidth - valueWidth*2 - itemWidth) / 2 //nolint:mnd // 进度条宽度
+
+	return totalWidth, valueWidth, itemWidth, progressBarWidth
 }
 
 func (s statsPanel) playerView(stats [][]playerStats, team *team) string {
