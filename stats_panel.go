@@ -90,16 +90,7 @@ func (s statsPanel) onStatsMsg(msg statsMsg) (statsPanel, tea.Cmd) {
 	}
 	s.msg = msg
 
-	if s.msg.isSuccess() {
-		team := s.msg.stats.team
-		content := lipgloss.JoinVertical(
-			lipgloss.Left,
-			s.goalView(s.msg.stats.goal, team),
-			s.teamView(s.msg.stats.teamStats, team),
-			s.playerView(s.msg.stats.playerStats, team),
-		)
-		s.viewport.SetContent(content)
-	}
+	s.updateContent()
 
 	if s.shouldRefresh(msg) {
 		cmd := tea.Tick(cfg.statsRefreshInterval, func(time.Time) tea.Msg {
@@ -113,6 +104,32 @@ func (s statsPanel) onStatsMsg(msg statsMsg) (statsPanel, tea.Cmd) {
 	}
 
 	return s, nil
+}
+
+func (s *statsPanel) updateContent() {
+	if !s.msg.isSuccess() || s.msg.stats.team == nil {
+		return
+	}
+
+	content := []string{}
+	goalView := s.goalView()
+	if goalView != "" {
+		content = append(content, goalView)
+	}
+	teamView := s.teamView()
+	if teamView != "" {
+		content = append(content, teamView)
+	}
+	playerView := s.playerView()
+	if playerView != "" {
+		content = append(content, playerView)
+	}
+
+	if len(content) == 0 {
+		s.viewport.SetContent("")
+	} else {
+		s.viewport.SetContent(lipgloss.JoinVertical(lipgloss.Left, content...))
+	}
 }
 
 func (s statsPanel) shouldRefresh(msg statsMsg) bool {
@@ -150,27 +167,33 @@ func (s statsPanel) View(focused bool) string {
 		return style.Render("没有数据")
 	}
 
-	return style.Render(s.viewport.View())
+	content := s.viewport.View()
+	if strings.TrimSpace(content) == "" {
+		return style.Render("暂无数据")
+	}
+
+	return style.Render(content)
 }
 
-func (s statsPanel) goalView(goal *goalStats, team *team) string {
-	if goal == nil || team == nil {
+func (s statsPanel) goalView() string {
+	goalStats := s.msg.stats.goal
+	if goalStats == nil {
 		return ""
 	}
 
 	columns := []table.Column{
-		{Title: "", Width: team.width()},
+		{Title: "", Width: s.msg.stats.team.width()},
 	}
-	for _, v := range goal.Head {
+	for _, v := range goalStats.Head {
 		columns = append(columns, table.Column{Title: v, Width: 6}) //nolint:mnd // cell宽度
 	}
 
 	rows := []table.Row{
-		{team.LeftName},
-		{team.RightName},
+		{s.msg.stats.team.LeftName},
+		{s.msg.stats.team.RightName},
 	}
 	for i := range rows {
-		rows[i] = append(rows[i], goal.Rows[i]...)
+		rows[i] = append(rows[i], goalStats.Rows[i]...)
 	}
 
 	t := table.New(
@@ -189,17 +212,18 @@ func (s statsPanel) goalView(goal *goalStats, team *team) string {
 		Render(t.View()) + "\n"
 }
 
-func (s *statsPanel) teamView(stats []teamStats, team *team) string {
-	if len(stats) == 0 || team == nil {
+func (s *statsPanel) teamView() string {
+	stats := s.msg.stats.teamStats
+	if len(stats) == 0 {
 		return ""
 	}
 
 	totalWidth, valueWidth, itemWidth, progressBarWidth := s.calcWidths(stats)
 
 	teamRow := fmt.Sprintf("%s%s%s",
-		team.LeftName,
+		s.msg.stats.team.LeftName,
 		lipgloss.NewStyle().Width(itemWidth).Align(lipgloss.Center).Render("vs"),
-		team.RightName,
+		s.msg.stats.team.RightName,
 	)
 	teamRow = lipgloss.NewStyle().
 		Width(totalWidth).
@@ -274,8 +298,9 @@ func (s statsPanel) calcWidths(stats []teamStats) (int, int, int, int) {
 	return totalWidth, valueWidth, itemWidth, progressBarWidth
 }
 
-func (s statsPanel) playerView(stats [][]playerStats, team *team) string {
-	if len(stats) == 0 || team == nil {
+func (s statsPanel) playerView() string {
+	stats := s.msg.stats.playerStats
+	if len(stats) == 0 {
 		return ""
 	}
 
@@ -309,9 +334,13 @@ func (s statsPanel) playerView(stats [][]playerStats, team *team) string {
 		tables = append(tables, t)
 	}
 
+	if len(tables) == 0 {
+		return ""
+	}
+
 	if len(tables) >= 2 { //nolint:mnd // 每只球队一个table
-		tables[0].Columns()[0].Title = team.LeftName
-		tables[1].Columns()[0].Title = team.RightName
+		tables[0].Columns()[0].Title = s.msg.stats.team.LeftName
+		tables[1].Columns()[0].Title = s.msg.stats.team.RightName
 	}
 
 	content := make([]string, len(tables))

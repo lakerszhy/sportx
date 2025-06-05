@@ -302,6 +302,10 @@ func fetchStats(matchID string) (*stats, error) {
 }
 
 func splitPlayerStats(s []playerStats) [][]playerStats {
+	if len(s) == 0 {
+		return [][]playerStats{}
+	}
+
 	var teams [][]playerStats
 	var players []playerStats
 
